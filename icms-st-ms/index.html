@@ -1,0 +1,331 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<title>Calculadora ICMS-ST MS</title>
+<meta name="description" content="Calculadora de ICMS Substituição Tributária de Mato Grosso do Sul, com base do Subanexo I atualizada automaticamente.">
+<style>
+/* Layout: faixa CT Price no topo; grade de 2 colunas (consulta do Subanexo I | cálculo) que vira 1 coluna no celular; resultado e lista da nota abaixo. */
+:root{
+  --navy:#1F3864; --navy2:#2E4A7D; --bg:#eef1f6; --card:#ffffff; --fg:#1a2233; --muted:#5b6578;
+  --line:#d6dce8; --soft:#f5f7fb; --accent:#1F3864; --accent-fg:#ffffff; --hi:#e7eefb;
+  --ok:#1d7a46; --warn:#9a5b00; --warn-bg:#fff6e5; --bad:#b42318; --chip:#e9eef7;
+  --sans: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1522; --card:#172033; --fg:#e4e9f2; --muted:#9aa5ba; --line:#2a3650; --soft:#121a2a;
+  --accent:#7ea2e6; --accent-fg:#0f1522; --hi:#1d2b47; --ok:#55c08a; --warn:#f0b65a; --warn-bg:#2b2213; --bad:#ff8a80; --chip:#22304a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1522; --card:#172033; --fg:#e4e9f2; --muted:#9aa5ba; --line:#2a3650; --soft:#121a2a;
+  --accent:#7ea2e6; --accent-fg:#0f1522; --hi:#1d2b47; --ok:#55c08a; --warn:#f0b65a; --warn-bg:#2b2213; --bad:#ff8a80; --chip:#22304a; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;line-height:1.45;margin:0}
+.band{background:linear-gradient(90deg,var(--navy),var(--navy2));color:#fff}
+.band .in,.wrap{max-width:1320px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.band .in{padding-block:14px;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;justify-content:space-between}
+.brand{font-weight:700;letter-spacing:.08em;font-size:13px}
+.brand span{font-weight:400;opacity:.8;letter-spacing:.02em}
+.band h1{margin:0;font-size:20px;font-weight:600;text-wrap:balance}
+.band .sub{font-size:12px;opacity:.85}
+.wrap{padding-block:18px 40px;display:grid;gap:16px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;min-width:0}
+h2{margin:0 0 12px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+h3{margin:14px 0 6px;font-size:13px;color:var(--accent)}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+input,select{width:100%;font:inherit;color:var(--fg);background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:7px 9px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input.num{text-align:right;font-variant-numeric:tabular-nums}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:10px}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.seg button,.btn{font:inherit;border:1px solid var(--line);background:var(--soft);color:var(--fg);border-radius:999px;padding:6px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);border-radius:6px}
+.btn.ghost{border-radius:6px}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chk{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--fg);margin:0 0 8px}
+.chk input{width:auto}
+.hint{font-size:12px;color:var(--muted)}
+.warn{background:var(--warn-bg);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);border-radius:6px;padding:8px 10px;font-size:12.5px;margin:8px 0}
+.res{list-style:none;margin:0;padding:0}
+.results{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:6px;margin-top:8px}
+.results button{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:8px 10px;color:var(--fg);font:inherit;cursor:pointer}
+.results button:hover,.results button[aria-selected="true"]{background:var(--hi)}
+.rmeta{font-family:var(--mono);font-size:11.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px}
+.rdesc{font-size:13px;margin-top:2px}
+.pill{display:inline-block;background:var(--chip);border-radius:999px;padding:1px 8px;font-size:11px;color:var(--fg);font-family:var(--sans)}
+.sel{border:1px solid var(--accent);border-radius:8px;padding:12px;margin-top:12px;background:var(--hi)}
+.sel .d{font-size:13px;margin:4px 0 8px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+.tw{overflow-x:auto}
+th{background:var(--navy);color:#fff;font-weight:600;font-size:12px;text-align:left;padding:6px 8px;white-space:nowrap}
+td{border-bottom:1px solid var(--line);padding:6px 8px;font-size:13px;vertical-align:top}
+td.n,th.n{text-align:right;white-space:nowrap}
+.mv td{text-align:center}.mv td.on{background:var(--accent);color:var(--accent-fg);font-weight:600}
+.total{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;background:var(--navy);color:#fff;border-radius:8px;padding:14px 16px;margin-top:12px}
+.total b{font-size:26px;font-variant-numeric:tabular-nums}
+.memo{font-family:var(--mono);font-size:12px;white-space:pre-wrap;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:10px;margin-top:10px;overflow-x:auto}
+.kv td:first-child{color:var(--muted)}
+.empty{color:var(--muted);font-size:13px;padding:10px}
+.leg p,.leg li{max-width:85ch}
+.leg code{font-family:var(--mono);font-size:12.5px;background:var(--soft);padding:1px 5px;border-radius:4px}
+footer{text-align:center;font-size:12px;color:var(--muted);padding-bottom:20px}
+.naost{border:2px solid var(--bad);color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,var(--card));border-radius:8px;padding:12px 14px;margin-top:10px;display:grid;gap:4px;font-size:13px}
+.naost b{font-size:15px;letter-spacing:.01em}
+.naost span{color:var(--fg)}
+.block{border:1px dashed var(--line);border-radius:8px;padding:14px;color:var(--muted);font-size:13px;margin-bottom:10px}
+.block.ts{border:2px solid var(--bad);color:var(--bad);font-weight:700;font-size:15px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+#loteTab input,#loteTab select{padding:5px 6px;font-size:12.5px}
+#loteTab td,#loteTab th{vertical-align:middle;padding:5px 4px}
+#loteTab .w-ncm{width:96px}#loteTab .w-v{width:78px}#loteTab .w-s{width:62px}
+#loteTab select.pick{min-width:180px;max-width:220px}
+.trib{color:var(--bad);font-weight:700;font-size:12.5px}
+.tag{font-size:11px;color:var(--muted)}
+.drop{display:flex;flex-direction:column;align-items:center;gap:2px;border:2px dashed var(--line);border-radius:8px;padding:18px;cursor:pointer;color:var(--muted);text-align:center}
+.drop b{color:var(--accent)}
+.drop.over{border-color:var(--accent);background:var(--hi)}
+.drop input{position:absolute;width:1px;height:1px;opacity:0}
+.nfhead{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12.5px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:10px 0 0;background:var(--soft)}
+.nfhead b{color:var(--accent)}
+#xmlTab td,#xmlTab th{vertical-align:middle;padding:5px 4px}
+#xmlTab select.pick{min-width:170px;max-width:210px;padding:4px;font-size:12px}
+#xmlTab select.w-s,#xmlTab input.w-s{width:64px;padding:4px;font-size:12.5px}
+.ok-t{color:var(--ok)}.warn-t{color:var(--warn)}
+.neg{color:var(--bad)}.pos{color:var(--ok)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:2px solid var(--line);margin-bottom:-6px}
+.tabs button{font:inherit;font-weight:600;color:var(--muted);background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:10px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.tabs button span{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--chip);color:var(--fg);font-size:12px}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.tabs button[aria-selected="true"] span{background:var(--accent);color:var(--accent-fg)}
+.tabs button:hover{color:var(--accent)}
+.opt-global{margin:0;color:var(--muted)}
+.tabpanel{display:grid;gap:16px;min-width:0}
+.x{background:none;border:0;color:var(--bad);cursor:pointer;font:inherit}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{.noprint{display:none!important}body{background:#fff}.band,th,.total{-webkit-print-color-adjust:exact;print-color-adjust:exact}.card{break-inside:avoid}}
+</style>
+</head><body>
+
+<header class="band"><div class="in">
+  <div><div class="brand">CT PRICE <span>· Organização Contábil</span></div><h1>Calculadora ICMS-ST · Mato Grosso do Sul</h1></div>
+  <div class="sub">RICMS/MS (Dec. 9.203/1998) · Anexo III e Subanexo I · <span id="nItens"></span><br><span id="baseInfo"></span></div>
+</div></header>
+
+<main class="wrap">
+<nav class="tabs noprint" role="tablist" aria-label="Forma de cálculo">
+  <button type="button" role="tab" id="tb-xml" data-tab="xml" aria-controls="tab-xml" aria-selected="true"><span>1</span>Cálculo por XML</button>
+  <button type="button" role="tab" id="tb-consulta" data-tab="consulta" aria-controls="tab-consulta" aria-selected="false"><span>2</span>Cálculo manual · consulta</button>
+  <button type="button" role="tab" id="tb-itens" data-tab="itens" aria-controls="tab-itens" aria-selected="false"><span>3</span>Cálculo manual · vários itens</button>
+</nav>
+<label class="chk opt-global"><input type="checkbox" id="portaPorta"> Venda porta a porta: considerar a Tabela XXIX na consulta por NCM (vale para as três formas de cálculo)</label>
+
+<div class="tabpanel" id="tab-consulta" role="tabpanel" aria-labelledby="tb-consulta" hidden>
+<div class="grid">
+
+<section class="card" aria-labelledby="h-busca">
+  <h2 id="h-busca">1 · Mercadoria (Subanexo I)</h2>
+  <div class="seg" id="modoSeg" aria-label="Modo de cálculo">
+    <button type="button" data-v="tab" aria-pressed="true">Pela tabela (Subanexo I)</button>
+    <button type="button" data-v="man" aria-pressed="false">Cálculo manual</button>
+  </div>
+  <div id="manInfo" class="warn" hidden>Cálculo manual: informe a MVA e as alíquotas no item 2. A calculadora não verifica se a mercadoria está sujeita à ST.</div>
+  <div id="tabBox">
+  <div class="row" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr)">
+    <div><label for="q">NCM, CEST ou descrição</label><input id="q" placeholder="ex.: 87089990, 01.001.00, pneu" autocomplete="off"></div>
+    <div><label for="fseg">Segmento</label><select id="fseg"><option value="">Todos</option></select></div>
+  </div>
+  <div class="hint" id="qinfo"></div>
+  <div class="naost" id="naoSTBox" role="status" hidden><b>PRODUTO TRIBUTADO - Sem incidência de ICMS Substituição Tributária</b><span id="naoSTncm"></span></div>
+  <div class="results" id="results" role="listbox" aria-label="Itens encontrados"></div>
+  <div id="selBox"></div>
+  </div>
+</section>
+
+<section class="card" aria-labelledby="h-op">
+  <h2 id="h-op">2 · Operação e valores</h2>
+  <label>Tipo de operação</label>
+  <div class="seg" id="opSeg">
+    <button type="button" data-v="inter" aria-pressed="true">Entrada interestadual em MS</button>
+    <button type="button" data-v="interna" aria-pressed="false">Operação interna em MS</button>
+  </div>
+  <div id="aliqInterBox">
+    <label>Alíquota interestadual (origem)</label>
+    <div class="seg" id="aiSeg">
+      <button type="button" data-v="4" aria-pressed="false">4%</button>
+      <button type="button" data-v="7" aria-pressed="false">7%</button>
+      <button type="button" data-v="12" aria-pressed="true">12%</button>
+    </div>
+  </div>
+  <div class="row">
+    <div><label for="ad">Alíquota interna MS (%)</label><input id="ad" class="num" value="17"></div>
+    <div><label for="ap">Alíquota do ICMS próprio (%)</label><input id="ap" class="num" value="12" title="Na entrada interestadual segue a alíquota escolhida acima"></div>
+  </div>
+  <div class="hint" id="adHint"></div>
+
+  <h3>Base de cálculo (art. 3º, Anexo III)</h3>
+  <select id="metodo" aria-label="Método da base de cálculo">
+    <option value="mva">IV · Valor da operação + encargos + MVA</option>
+    <option value="fixado">I · Preço final fixado por órgão público</option>
+    <option value="pmpf">II · PMPF</option>
+    <option value="sugerido">III · Preço sugerido pelo fabricante/importador</option>
+  </select>
+
+  <div id="mvaBox" style="margin-top:10px">
+    <div class="seg" id="mvaSrc">
+      <button type="button" data-v="tab" aria-pressed="true">MVA da tabela</button>
+      <button type="button" data-v="man" aria-pressed="false">MVA informada</button>
+    </div>
+    <div id="mvaManBox" hidden>
+      <div class="row">
+        <div><label for="mvaO">MVA original (%)</label><input id="mvaO" class="num" value="40,00"></div>
+        <div style="display:flex;align-items:end"><label class="chk" style="margin:0 0 8px"><input type="checkbox" id="ajustar" checked> Ajustar (art. 9º-A)</label></div>
+      </div>
+    </div>
+    <div class="hint" id="mvaInfo"></div>
+  </div>
+  <div id="precoBox" hidden>
+    <div id="pmpfBox" hidden style="margin-top:10px">
+      <label for="pmpfSel">PMPF vigente em MS</label>
+      <select id="pmpfSel"><option value="">Escolha o combustível…</option></select>
+      <div class="hint" id="pmpfAto"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div><label for="pUnit">Preço unitário de referência (R$)</label><input id="pUnit" class="num" value="0,00"></div>
+      <div><label for="qtd" id="qtdLbl">Quantidade (unidade do preço)</label><input id="qtd" class="num" value="1"></div>
+    </div>
+  </div>
+
+  <h3>Valores do item na NF-e</h3>
+  <div class="row">
+    <div><label for="vProd">Mercadoria (R$)</label><input id="vProd" class="num" value="1.000,00"></div>
+    <div><label for="vIPI">IPI (R$)</label><input id="vIPI" class="num" value="0,00"></div>
+    <div><label for="vFrete">Frete (R$)</label><input id="vFrete" class="num" value="0,00"></div>
+    <div><label for="vSeg">Seguro (R$)</label><input id="vSeg" class="num" value="0,00"></div>
+    <div><label for="vOutras">Outras despesas (R$)</label><input id="vOutras" class="num" value="0,00"></div>
+    <div><label for="vDesc">Desconto incondicional (R$)</label><input id="vDesc" class="num" value="0,00"></div>
+  </div>
+  <label class="chk"><input type="checkbox" id="ipiProp"> IPI integra a base do ICMS próprio (destinatário uso/consumo ou não contribuinte)</label>
+
+  <h3>Ajustes</h3>
+  <div class="row">
+    <div><label for="redST">Redução da BC-ST (%)</label><input id="redST" class="num" value="0,00"></div>
+    <div><label for="redP">Redução da BC própria (%)</label><input id="redP" class="num" value="0,00"></div>
+    <div><label for="icmsInf">ICMS próprio destacado (R$, opcional)</label><input id="icmsInf" class="num" placeholder="calcular"></div>
+  </div>
+  <label class="chk"><input type="checkbox" id="fecomp"> Adicional FECOMP sobre a ST</label>
+  <div class="row" id="fecompBox" hidden><div><label for="pFec">FECOMP (%)</label><input id="pFec" class="num" value="2,00"></div></div>
+</section>
+</div>
+
+<section class="card" aria-labelledby="h-res">
+  <h2 id="h-res">3 · Resultado</h2>
+  <div id="gate" class="block" role="status" hidden></div>
+  <div id="alerts"></div>
+  <div class="tw"><table class="kv"><tbody id="resTab"></tbody></table></div>
+  <div class="total"><span>ICMS-ST a recolher<span id="totSub" style="display:block;font-size:12px;opacity:.85"></span></span><b id="tot">R$ 0,00</b></div>
+  <div class="btns noprint">
+    <button class="btn primary" id="addList" type="button">Adicionar à nota</button>
+    <button class="btn ghost" id="copyOne" type="button">Copiar memória</button>
+    <span class="hint" id="copyMsg" role="status"></span>
+  </div>
+  <div class="memo" id="memo"></div>
+</section>
+
+<section class="card" aria-labelledby="h-nota">
+  <h2 id="h-nota">4 · Itens da nota</h2>
+  <div class="row">
+    <div><label for="cli">Empresa / cliente</label><input id="cli" placeholder="opcional"></div>
+    <div><label for="nf">NF-e / competência</label><input id="nf" placeholder="opcional"></div>
+  </div>
+  <div class="tw"><table><thead><tr><th>#</th><th>CEST / NCM</th><th>Descrição</th><th class="n">Alíq.</th><th class="n">MVA</th><th class="n">BC-ST</th><th class="n">ICMS próprio</th><th class="n">ICMS-ST</th><th class="n">FECOMP</th><th class="noprint"></th></tr></thead>
+  <tbody id="lista"></tbody><tfoot id="listaTot"></tfoot></table></div>
+  <div class="btns noprint">
+    <button class="btn primary" id="xlsxNota" type="button">Baixar Excel</button>
+    <button class="btn ghost" id="copyAll" type="button">Copiar resumo da nota</button>
+    <button class="btn ghost" id="clearAll" type="button">Limpar lista</button>
+    <span class="hint" id="notaMsg" role="status"></span>
+  </div>
+</section>
+</div>
+
+<div class="tabpanel" id="tab-itens" role="tabpanel" aria-labelledby="tb-itens" hidden>
+
+<section class="card" id="lote" aria-labelledby="h-lote">
+  <h2 id="h-lote">Cálculo manual · vários itens</h2>
+  <p class="hint" style="margin-top:-6px">Cada linha consulta o NCM no Subanexo I e calcula pela MVA da tabela (art. 3º, IV), com a alíquota de origem escolhida em cada linha. NCM fora da tabela aparece como produto tributado e não é calculado. Para PMPF, preço sugerido, reduções ou FECOMP, use o cálculo individual.</p>
+  <details class="noprint" style="margin:8px 0 12px">
+    <summary style="cursor:pointer;color:var(--accent);font-weight:600">Colar lista (Excel ou texto)</summary>
+    <p class="hint">Uma linha por produto, colunas separadas por tabulação (copiado do Excel) ou ponto e vírgula, nesta ordem: <b>NCM; valor da mercadoria; alíquota de origem (4, 7, 12 ou INT); IPI; frete + seguro + outras despesas; desconto</b>. Só NCM e valor são obrigatórios.</p>
+    <textarea id="loteTxt" rows="5" style="width:100%;font-family:var(--mono);font-size:12.5px;color:var(--fg);background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:8px" placeholder="87089990;1.500,00;12;75,00;30,00&#10;22030000;800,00;7&#10;10063021;300,00"></textarea>
+    <div class="btns"><button class="btn primary" id="lotePaste" type="button">Incluir linhas</button><span class="hint" id="loteMsg" role="status"></span></div>
+  </details>
+  <div class="tw"><table id="loteTab"><thead><tr><th>#</th><th>NCM</th><th>Mercadoria ST (Subanexo I)</th><th>Origem</th><th class="n">Mercadoria</th><th class="n">IPI</th><th class="n">Frete/desp.</th><th class="n">Desconto</th><th class="n">Alíq. int.</th><th class="n">MVA</th><th class="n">BC-ST</th><th class="n">ICMS próprio</th><th class="n">ICMS-ST</th><th class="noprint"></th></tr></thead>
+  <tbody id="loteBody"></tbody><tfoot id="loteTot"></tfoot></table></div>
+  <div class="btns noprint">
+    <button class="btn ghost" id="loteAdd" type="button">Adicionar linha</button>
+    <button class="btn primary" id="xlsxLote" type="button">Baixar Excel</button>
+    <button class="btn ghost" id="loteCopy" type="button">Copiar resultado</button>
+    <button class="btn ghost" id="loteClear" type="button">Limpar</button>
+    <span class="hint" id="loteMsg2" role="status"></span>
+  </div>
+</section>
+
+</div>
+
+<div class="tabpanel" id="tab-xml" role="tabpanel" aria-labelledby="tb-xml">
+<section class="card" id="xml" aria-labelledby="h-xml">
+  <h2 id="h-xml">Cálculo por XML da NF-e</h2>
+  <p class="hint" style="margin-top:-6px">Selecione ou arraste um ou mais XML de NF-e (modelo 55). Cada item é consultado no Subanexo I pelo NCM e calculado com os valores da nota: mercadoria, IPI, frete, seguro, outras despesas e desconto. O arquivo é lido só no seu navegador e não é enviado para lugar nenhum.</p>
+  <label for="xmlFile" class="drop noprint" id="xmlDrop"><b>Escolher arquivos XML</b><span>ou arraste para cá</span><input type="file" id="xmlFile" accept=".xml,text/xml,application/xml" multiple></label>
+  <label class="chk" style="margin-top:10px"><input type="checkbox" id="xmlUsaVicms" checked> Deduzir o ICMS próprio destacado no XML (quando houver); sem destaque, calcula pela alíquota de origem</label>
+  <div id="xmlHead"></div>
+  <div class="tw"><table id="xmlTab"><thead><tr><th>#</th><th>NF</th><th>Produto</th><th>NCM · item ST</th><th>CST · CFOP</th><th>Origem</th><th class="n">Valor op.</th><th class="n">Alíq. int.</th><th class="n">MVA</th><th class="n">BC-ST</th><th class="n">ICMS próprio</th><th class="n">ST calculado</th><th class="n">ST na NF</th><th class="n">Diferença</th></tr></thead>
+  <tbody id="xmlBody"><tr><td colspan="14" class="empty">Nenhum XML importado.</td></tr></tbody><tfoot id="xmlTot"></tfoot></table></div>
+  <div class="btns noprint">
+    <button class="btn primary" id="xlsxXml" type="button">Baixar Excel</button>
+    <button class="btn ghost" id="xmlCopy" type="button">Copiar resultado</button>
+    <button class="btn ghost" id="xmlClear" type="button">Limpar</button>
+    <span class="hint" id="xmlMsg" role="status"></span>
+  </div>
+  <p class="hint">Alíquota de origem: remetente de MS = operação interna; senão a alíquota do ICMS no XML (4, 7 ou 12%); sem destaque, 4% para mercadoria de origem estrangeira (orig 1, 2, 3 ou 8), 7% para remetente de SP, RJ, MG, PR, SC ou RS e 12% para as demais UFs. Em NF de entrada emitida pelo próprio destinatário, o remetente é quem aparece como destinatário no XML. NF de devolução, de ajuste ou de venda a não contribuinte não é calculada. Enquadramento: quando a NF traz CEST, ele define o item do Subanexo I; CEST fora da tabela aparece como produto tributado. Sem CEST, a consulta é pelo NCM e a linha fica marcada para conferir a descrição. Em qualquer linha dá para trocar o item ou marcar “Não se enquadra”. A Tabela XXIX (porta a porta) só entra se a opção “Venda porta a porta” estiver marcada. Diferença = ST calculado − ST destacado na nota (até R$ 0,01 é tratado como arredondamento). Confira cada linha antes de recolher.</p>
+</section>
+
+</div>
+
+<section class="card leg" aria-labelledby="h-leg">
+  <h2 id="h-leg">Legislação e fórmulas</h2>
+  <p><b>Ordem da base de cálculo (Anexo III, art. 3º):</b> I · preço final fixado por órgão público; II · PMPF; III · preço sugerido pelo fabricante ou importador; IV · na falta das anteriores, valor da operação + IPI, frete, seguro e demais encargos, acrescido da MVA. O parágrafo único do art. 3º traz a comparação com o Valor Real Pesquisado (VRP), que pode alterar a base.</p>
+  <p><code>BC-ST = (mercadoria + IPI + frete + seguro + outras − desconto) × (1 + MVA) × (1 − redução)</code><br>
+     <code>ICMS-ST = BC-ST × alíquota interna − ICMS próprio</code> (arts. 10 e 11)</p>
+  <p><b>MVA ajustada (art. 9º-A):</b> <code>[(1 + MVA original) × (1 − ALQ inter) ÷ (1 − ALQ intra)] − 1</code>. As colunas 4%, 7% e 12% do Subanexo I já trazem a MVA ajustada: a calculadora usa a coluna da alíquota escolhida sem ajustar de novo. O ajuste só é feito no modo “MVA informada”.</p>
+  <p><b>Fonte dos dados:</b> <span id="fonteInfo"></span> Histórico de alterações em <a href="https://github.com/MHaas22/Ferramentas/blob/main/icms-st-ms/dados/HISTORICO.md" target="_blank" rel="noopener">HISTORICO.md</a>.</p>
+  <ul>
+    <li>Lei Estadual nº 1.810/1997, arts. 32 e 49</li>
+    <li>Decreto nº 9.203/1998 (RICMS/MS), Anexo III: arts. 3º, 7º, 9º-A, 10, 11 e 12-B; Subanexos I e II</li>
+    <li>Combustíveis (Tabela VII): Convênio ICMS 110/2007 e Atos COTEPE/PMPF e MVA</li>
+  </ul>
+  <p><b>Enquadramento:</b> ao digitar o NCM completo (8 dígitos), a calculadora consulta o Subanexo I. Se nenhuma posição da tabela abranger o código, exibe “PRODUTO TRIBUTADO - Sem incidência de ICMS Substituição Tributária” e não calcula. Se houver posição, confira se a descrição e o CEST correspondem ao produto: o NCM sozinho não enquadra o item.</p>
+  <p class="hint">Cálculo de apoio. Confira descrição, NCM e CEST do item, a alíquota interna, benefícios e reduções aplicáveis e o tratamento do FECOMP antes de recolher.</p>
+</section>
+<footer>CT Price Organização Contábil · Campo Grande/MS</footer>
+</main>
+
+<div id="carregando" class="wrap"><div class="card">Carregando a base de dados…</div></div>
+<script>
+/* Carrega os dados (atualizados diariamente) e depois inicia a calculadora. */
+(async function(){
+  const v = Date.now().toString(36);
+  const get = n => fetch('dados/'+n+'.json?v='+v, {cache:'no-cache'}).then(r=>{ if(!r.ok) throw new Error(n+': HTTP '+r.status); return r.json(); });
+  try{
+    const [subanexo, param, pmpf] = await Promise.all([get('subanexo1'), get('parametros'), get('pmpf')]);
+    window.ICMS_DADOS = { subanexo, param, pmpf };
+    document.getElementById('carregando').remove();
+    const s = document.createElement('script'); s.src = 'app.js?v='+v; document.body.appendChild(s);
+  }catch(e){
+    document.getElementById('carregando').innerHTML = '<div class="card warn">Não foi possível carregar a base de dados ('+String(e.message||e)+'). Recarregue a página.</div>';
+  }
+})();
+</script>
+
+</body></html>

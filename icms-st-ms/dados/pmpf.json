@@ -1,0 +1,14 @@
+{
+  "atualizado_em": "2026-11-04",
+  "ato": "Ato COTEPE/PMPF nº 29, de 22 de outubro de 2026",
+  "publicacao": "2026-10-23",
+  "vigencia_inicio": "2026-11-01",
+  "url": "https://www.confaz.fazenda.gov.br/legislacao/atos-pmpf/2026/ato-cotepe-pmpf-29-26",
+  "uf": "MS",
+  "itens": [
+    {"produto": "QAV · querosene de aviação", "valor": 7.6119, "unidade": "litro"},
+    {"produto": "AEHC · etanol hidratado combustível", "valor": 4.0564, "unidade": "litro"},
+    {"produto": "GNV · gás natural veicular", "valor": 4.4986, "unidade": "m³"}
+  ],
+  "observacao": "Gasolina, diesel, biodiesel e GLP seguem a tributação monofásica ad rem (LC 192/2022; Convênios ICMS 199/2022 e 15/2023) e não constam do PMPF."
+}

@@ -205,6 +205,13 @@
 
     const TOOLS = [
       {
+        name: "Calculadora ICMS-ST MS",
+        icon: "🧮",
+        category: "Fiscal",
+        description: "ICMS Substituição Tributária de Mato Grosso do Sul por XML, consulta ou lote. Base do Subanexo I e PMPF atualizados diariamente.",
+        url: "icms-st-ms/"
+      },
+      {
         name: "ChatGPT",
         icon: "💬",
         category: "Chat",
@@ -302,7 +309,7 @@
           </div>
           <h2></h2>
           <p></p>
-          <a href="${t.url}" target="_blank" rel="noopener">Acessar →</a>
+          <a href="${t.url}"${/^https?:/.test(t.url) ? ' target="_blank" rel="noopener"' : ""}>Acessar →</a>
         `;
         card.querySelector("h2").textContent = t.name;
         card.querySelector("p").textContent = t.description;
