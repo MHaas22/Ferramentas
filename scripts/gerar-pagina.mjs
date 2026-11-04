@@ -21,5 +21,11 @@ if (ini < 0 || fim < ini) throw new Error('Bloco de carregamento não encontrado
 const json = JSON.stringify(dados).replace(/</g, '\\u003c');
 const app = ler('app.js').replace(/<\/script/gi, '<\\/script');
 html = html.slice(0, ini) + '<script>\nwindow.ICMS_DADOS = ' + json + ';\n' + app + '</script>' + html.slice(fim);
+// Formato do Artifact do claude.ai: o próprio claude.ai coloca doctype/head/body; o arquivo traz só o conteúdo.
+html = html.replace(/^<!doctype html>[\s\S]*?<\/style>\s*/i, '')
+           .replace(/<\/head><body>\s*/i, '')
+           .replace(/\s*<\/body><\/html>\s*$/i, '\n')
+           .replace(/<meta name="description"[^>]*>/, '<meta name="claude:viewport-fit-sides" content="cover">');
+if (!html.startsWith('<title>')) throw new Error('A página gerada deveria começar pelo <title>');
 writeFileSync(join(base, 'Calculadora_ICMS-ST_MS.html'), html);
 console.log('Gerado icms-st-ms/Calculadora_ICMS-ST_MS.html (' + Math.round(html.length / 1024) + ' KB)');

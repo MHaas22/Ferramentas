@@ -1,6 +1,5 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <title>Calculadora ICMS-ST MS</title>
-<meta name="description" content="Calculadora de ICMS Substituição Tributária de Mato Grosso do Sul, com base do Subanexo I atualizada automaticamente.">
+<meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: faixa CT Price no topo; grade de 2 colunas (consulta do Subanexo I | cálculo) que vira 1 coluna no celular; resultado e lista da nota abaixo. */
 :root{
@@ -105,8 +104,6 @@ footer{text-align:center;font-size:12px;color:var(--muted);padding-bottom:20px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media print{.noprint{display:none!important}body{background:#fff}.band,th,.total{-webkit-print-color-adjust:exact;print-color-adjust:exact}.card{break-inside:avoid}}
 </style>
-</head><body>
-
 <header class="band"><div class="in">
   <div><div class="brand">CT PRICE <span>· Organização Contábil</span></div><h1>Calculadora ICMS-ST · Mato Grosso do Sul</h1></div>
   <div class="sub">RICMS/MS (Dec. 9.203/1998) · Anexo III e Subanexo I · <span id="nItens"></span><br><span id="baseInfo"></span></div>
@@ -889,5 +886,3 @@ $('xlsxLote').onclick = ()=>{
   baixar('ICMS-ST varios itens '+hoje()+'.xlsx', xlsx([{name:'Itens', title:'Cálculo de ICMS-ST · vários itens', sub:['Gerado em '+new Date().toLocaleString('pt-BR'), FONTE], cols, rows, total}]), $('loteMsg2'));
 };
 </script>
-
-</body></html>
