@@ -66,11 +66,17 @@ Reservado. Quando o usuário enviar a planilha, este passo vai dizer onde ela fi
    node scripts/validar-dados.mjs --comparar /tmp/anterior
    ```
    Corrija até aparecer "Dados válidos.". Se não conseguir corrigir, desfaça as alterações (`git checkout -- icms-st-ms/dados`) e relate.
-2. Se algo mudou além das datas de conferência, acrescente no topo de `dados/HISTORICO.md` uma seção `## AAAA-MM-DD`
-   com cada mudança e o ato ou decreto de origem.
-3. Commit e push direto na `main`, que publica sozinho pelo GitHub Pages:
+2. Regenere a página única (o arquivo da calculadora com os dados embutidos):
    ```bash
-   git add icms-st-ms/dados && git commit -m "Dados ICMS-ST MS: <resumo curto> (AAAA-MM-DD)" && git push origin main
+   node scripts/gerar-pagina.mjs
+   ```
+3. Se algo mudou além das datas de conferência, acrescente no topo de `dados/HISTORICO.md` uma seção `## AAAA-MM-DD`
+   com cada mudança e o ato ou decreto de origem.
+4. Commit e push direto na `main`, que publica sozinho pelo GitHub Pages:
+   ```bash
+   git add icms-st-ms/dados icms-st-ms/Calculadora_ICMS-ST_MS.html && git commit -m "Dados ICMS-ST MS: <resumo curto> (AAAA-MM-DD)" && git push origin main
    ```
    Se nada mudou além de `atualizado_em`, também faça o commit: ele registra que a base foi conferida.
-4. Termine com um resumo curto em português: o que foi conferido, o que mudou (com o ato), o que ficou pendente e as fontes que falharam.
+5. Republique a página no claude.ai: se houver um link de Artifact em `ARTIFACT_URL` abaixo, publique `icms-st-ms/Calculadora_ICMS-ST_MS.html` nesse link (Artifact, ação publish, com `url`).
+   ARTIFACT_URL: (a definir)
+6. Termine com um resumo curto em português: o que foi conferido, o que mudou (com o ato), o que ficou pendente e as fontes que falharam.
