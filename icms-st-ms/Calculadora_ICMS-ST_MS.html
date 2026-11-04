@@ -819,20 +819,32 @@ function xlsx(sheets){
     const last=colL(sh.cols.length-1);
     files.push(['xl/worksheets/sheet'+(si+1)+'.xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetViews><sheetView workbookViewId="0"><pane ySplit="'+hr+'" topLeftCell="A'+(hr+1)+'" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'+cols+'<sheetData>'+rows.join('')+'</sheetData>'+(sh.rows.length?'<autoFilter ref="A'+hr+':'+last+(hr+sh.rows.length)+'"/>':'')+'</worksheet>']);
   });
-  return zip(files);
+  const blob = zip(files); blob._sheets = sheets; return blob;
 }
 const DL = (window.claude && window.claude.use) ? window.claude.use('downloads').catch(()=>null) : Promise.resolve(null);
+/* Planilha em texto (tabulação) para colar no Excel quando o download não é liberado nesta visualização. */
+function planilhaTexto(sheets){
+  const cel = v => v===null||v===undefined ? '' : (typeof v==='number' ? v.toLocaleString('pt-BR',{maximumFractionDigits:4}) : String(v).replace(/[\t\r\n]+/g,' '));
+  return (sheets||[]).map(sh=>[sh.title||sh.name, ...(sh.sub||[]), '', sh.cols.map(c=>c.h).join('\t'), ...sh.rows.map(r=>r.map(cel).join('\t')), ...(sh.total?[sh.total.map(cel).join('\t')]:[]), ...(sh.after||[]).map(r=>r.map(cel).join('\t'))].join('\n')).join('\n\n\n');
+}
+async function copiarPlanilha(blob, msg, motivo){
+  const txt = planilhaTexto(blob._sheets);
+  try{ await navigator.clipboard.writeText(txt); msg(motivo+' A planilha foi copiada: abra o Excel e cole (Ctrl+V).', 9000); return; }catch(e){}
+  const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select();
+  let ok=false; try{ ok=document.execCommand('copy'); }catch(e){} ta.remove();
+  msg(ok ? motivo+' A planilha foi copiada: abra o Excel e cole (Ctrl+V).' : motivo+' Use o botão “Copiar resultado” e cole no Excel.', 9000);
+}
 async function baixar(nome, blob, msgEl){
-  const msg = t=>{ if(msgEl){ msgEl.textContent=t; setTimeout(()=>{ if(msgEl.textContent===t) msgEl.textContent=''; },4000); } };
+  const msg = (t,ms=4000)=>{ if(msgEl){ msgEl.textContent=t; setTimeout(()=>{ if(msgEl.textContent===t) msgEl.textContent=''; },ms); } };
   const dl = await DL;
-  if(dl){
-    try{ await dl.save({filename:nome, data:blob}); msg('Planilha salva: '+nome); }
-    catch(e){ msg(e && e.code==='declined' ? 'Download cancelado.' : 'Não foi possível baixar aqui ('+(e&&e.code||'erro')+').'); }
-    return;
+  if(!dl) return copiarPlanilha(blob, msg, 'O download não está liberado nesta visualização.');
+  try{ await dl.save({filename:nome, data:blob}); msg('Planilha salva: '+nome); }
+  catch(e){
+    const c = e && e.code;
+    if(c==='declined') msg('Download cancelado.');
+    else if(c==='rate_limited') msg('Já há um download aguardando confirmação. Confirme ou cancele e tente de novo.', 6000);
+    else copiarPlanilha(blob, msg, 'O download não está liberado nesta visualização.');
   }
-  try{
-    const url=URL.createObjectURL(blob), a=document.createElement('a'); a.href=url; a.download=nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),5000); msg('Planilha gerada: '+nome);
-  }catch(e){ msg('O navegador bloqueou o download.'); }
 }
 const hoje = ()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
 const sanit = s => String(s||'').replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,' ').trim().slice(0,60);
