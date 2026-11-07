@@ -1,5 +1,5 @@
 {
-  "atualizado_em": "2026-11-05",
+  "atualizado_em": "2026-11-07",
   "aliquota_interna": 17,
   "fecomp": 2,
   "aliquotas_interestaduais": [
@@ -8,8 +8,8 @@
     12
   ],
   "fontes": {
-    "aliquota_interna": "Lei Estadual nº 1.810/1997 (alíquota interna padrão de MS)",
-    "fecomp": "Legislação do FECOMP/MS (adicional de ICMS para o Fundo de Combate à Pobreza)"
+    "aliquota_interna": "Lei Estadual nº 1.810/1997, art. 41, III, a (alíquota interna padrão de MS)",
+    "fecomp": "Lei Estadual nº 1.810/1997, art. 41-A (adicional de 2 p.p. ao FECOMP sobre mercadorias específicas)"
   },
   "observacao": "Valores padrão da calculadora. Itens do Subanexo I com alíquota implícita diferente continuam sendo detectados automaticamente."
 }
