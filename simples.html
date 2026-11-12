@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Consulta Simples Nacional — Puro ou Híbrido</title>
+  <title>CT Price — Consulta Simples Nacional</title>
   <meta name="description" content="Consulte por CNPJ se a empresa é optante pelo Simples Nacional e se é Simples Puro ou Híbrido (IBS/CBS pelo regime regular). Consulta individual ou por planilha." />
   <style>
     :root {
-      --bg: #0b0d12;
-      --surface: #151922;
-      --surface-2: #1c2230;
-      --border: #262e3f;
-      --text: #e7ebf3;
-      --muted: #8b95a8;
-      --accent: #7c5cff;
-      --accent-2: #22d3ee;
+      --bg: #04201f;
+      --surface: #0a2f2c;
+      --surface-2: #0e3a35;
+      --border: #1c5148;
+      --text: #eef7f3;
+      --muted: #9dbbb0;
+      --accent: #17a567;
+      --accent-2: #5fe0a8;
       --ok: #34d399;
       --warn: #fbbf24;
       --bad: #f87171;
@@ -23,24 +23,27 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      background: radial-gradient(1200px 600px at 10% -10%, #1d1740 0%, transparent 60%),
-                  radial-gradient(900px 500px at 110% 0%, #0d3a48 0%, transparent 55%),
+      background: radial-gradient(1100px 700px at -5% 35%, rgba(23, 165, 103, .35) 0%, transparent 60%),
+                  radial-gradient(900px 600px at 110% 0%, #0b3a4a 0%, transparent 55%),
                   var(--bg);
+      background-attachment: fixed;
       color: var(--text);
       min-height: 100vh;
       line-height: 1.5;
     }
-    header { max-width: 1100px; margin: 0 auto; padding: 40px 24px 24px; text-align: center; }
+    .hero {
+      height: clamp(150px, 26vw, 300px);
+      background: #04201f url("assets/ct-price.webp") center / cover no-repeat;
+      border-bottom: 1px solid var(--border);
+    }
+    header { max-width: 1100px; margin: 0 auto; padding: 28px 24px 24px; text-align: center; }
     .back { color: var(--muted); text-decoration: none; font-size: 14px; }
     .back:hover { color: var(--accent-2); }
     h1 {
       font-size: clamp(1.7rem, 4.5vw, 2.6rem);
       margin: 14px 0 10px;
       letter-spacing: -0.02em;
-      background: linear-gradient(90deg, var(--accent), var(--accent-2));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      color: #fff;
     }
     .subtitle { color: var(--muted); max-width: 640px; margin: 0 auto; }
     main { max-width: 1100px; margin: 0 auto; padding: 0 24px 64px; }
@@ -85,13 +88,13 @@
     .box .label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
     .box .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
     .box .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
-    .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); } .info { color: var(--accent-2); }
+    .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); } .info { color: #5cc8ff; }
 
     .drop {
       border: 2px dashed var(--border); border-radius: var(--radius); padding: 36px 20px;
       text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
     }
-    .drop:hover, .drop.over { border-color: var(--accent); background: rgba(124, 92, 255, .06); }
+    .drop:hover, .drop.over { border-color: var(--accent); background: rgba(23, 165, 103, .1); }
     .drop strong { display: block; font-size: 17px; margin-bottom: 4px; }
     .drop span { color: var(--muted); font-size: 14px; }
 
@@ -116,6 +119,8 @@
   </style>
 </head>
 <body>
+
+  <div class="hero" role="img" aria-label="CT Price Organização Contábil"></div>
 
   <header>
     <a class="back" href="index.html">← Voltar para Ferramentas</a>
@@ -214,7 +219,7 @@
     </section>
   </main>
 
-  <footer>Feito com HTML e JavaScript · Dados: CNPJá</footer>
+  <footer>CT Price Organização Contábil · Dados: CNPJá</footer>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
   <script>
