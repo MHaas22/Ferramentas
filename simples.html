@@ -111,8 +111,6 @@
     td.wrap { white-space: normal; min-width: 220px; }
     tr:last-child td { border-bottom: none; }
 
-    details { margin-top: 18px; }
-    summary { cursor: pointer; color: var(--muted); font-size: 14px; }
     .note { color: var(--muted); font-size: 13px; margin-top: 18px; }
     .note p + p { margin-top: 8px; }
     footer { text-align: center; color: var(--muted); font-size: 13px; padding: 24px; border-top: 1px solid var(--border); }
@@ -189,22 +187,11 @@
     </section>
 
     <section class="panel">
-      <details>
-        <summary>Configurações avançadas (chave de API opcional)</summary>
-        <p class="hint">
-          Sem chave, a consulta usa a API pública gratuita do CNPJá, limitada a 5 consultas por minuto
-          (uma planilha com 100 CNPJs leva cerca de 20 minutos). Com uma chave da API comercial do
-          <a href="https://cnpja.com/api" target="_blank" rel="noopener">CNPJá</a>, a consulta é feita
-          em tempo real no Simples Nacional e sem essa espera (consome créditos da sua conta).
-          A chave fica salva apenas neste navegador.
+      <div class="note" style="margin-top:0">
+        <p>
+          A consulta usa a API pública gratuita do CNPJá, limitada a 5 consultas por minuto
+          (uma planilha com 100 CNPJs leva cerca de 20 minutos).
         </p>
-        <div class="row" style="margin-top:12px">
-          <input type="password" id="apikey" placeholder="Chave da API CNPJá (opcional)" autocomplete="off" />
-          <button class="btn" id="save-key" type="button">Salvar</button>
-        </div>
-        <p class="hint" id="key-status"></p>
-      </details>
-      <div class="note">
         <p>
           <strong>Como é classificado:</strong> empresa optante sem opção pelo regime regular de IBS/CBS
           = <strong>Puro</strong>; optante com "Opção pelo Regime Regular" de IBS e/ou CBS registrada
@@ -227,9 +214,7 @@
     // CONFIGURAÇÃO
     // ============================================================
     const PUBLIC_API = "https://open.cnpja.com/office/";      // gratuita, 5 consultas/min por IP
-    const PAID_API = "https://api.cnpja.com/office/";         // comercial, exige chave
     const PUBLIC_INTERVAL_MS = 12500;                          // respeita o limite de 5/min
-    const PAID_INTERVAL_MS = 400;
     const CACHE_TTL_MS = 24 * 60 * 60 * 1000;                  // reaproveita consultas por 24h
     const OFFICIAL_URL = "https://www8.receita.fazenda.gov.br/simplesnacional/aplicacoes.aspx?id=21";
     // ============================================================
@@ -265,8 +250,7 @@
       return m ? `${m[3]}/${m[2]}/${m[1]}` : "";
     }
 
-    // ---------- Chave de API / cache ----------
-    function getKey() { try { return localStorage.getItem("cnpja_key") || ""; } catch { return ""; } }
+    // ---------- Cache ----------
     function cacheGet(cnpj) {
       try {
         const hit = JSON.parse(localStorage.getItem("simples:" + cnpj) || "null");
@@ -337,11 +321,9 @@
       constructor(message, retryAfter) { super(message); this.retryAfter = retryAfter; }
     }
     async function fetchCnpj(cnpj) {
-      const key = getKey();
-      const url = key ? `${PAID_API}${cnpj}?simples=true` : PUBLIC_API + cnpj;
       let resp;
       try {
-        resp = await fetch(url, key ? { headers: { Authorization: key } } : undefined);
+        resp = await fetch(PUBLIC_API + cnpj);
       } catch {
         throw new LookupError("Falha de conexão com o serviço de consulta.");
       }
@@ -350,7 +332,6 @@
         throw new LookupError("Limite de consultas atingido.", (ra > 0 ? ra : 60) * 1000);
       }
       if (resp.status === 404) throw new LookupError("CNPJ não encontrado na base.");
-      if (resp.status === 401 || resp.status === 403) throw new LookupError("Chave de API inválida ou sem créditos.");
       if (!resp.ok) throw new LookupError(`Erro do serviço de consulta (HTTP ${resp.status}).`);
       return classify(cnpj, await resp.json());
     }
@@ -493,7 +474,7 @@
       const valid = batch.items.filter(i => i.valid);
       const unique = new Set(valid.map(i => i.cnpj)).size;
       const pendingNet = [...new Set(valid.map(i => i.cnpj))].filter(c => !cacheGet(c)).length;
-      const interval = getKey() ? PAID_INTERVAL_MS : PUBLIC_INTERVAL_MS;
+      const interval = PUBLIC_INTERVAL_MS;
       const mins = Math.ceil(pendingNet * interval / 60000);
       $("batch-info").textContent =
         `${batch.items.length} linha(s) lida(s) · ${unique} CNPJ(s) único(s) válido(s)` +
@@ -587,7 +568,7 @@
             : { status: "error", error: done.get(item.cnpj).error });
           continue;
         }
-        const interval = getKey() ? PAID_INTERVAL_MS : PUBLIC_INTERVAL_MS;
+        const interval = PUBLIC_INTERVAL_MS;
         if (!cacheGet(item.cnpj)) {
           const wait = lastNet + interval - Date.now();
           if (wait > 0) await sleep(wait);
@@ -702,22 +683,6 @@
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["CNPJ", "Fornecedor"], ["00.000.000/0001-91", "Exemplo"]]), "CNPJs");
       XLSX.writeFile(wb, "modelo-cnpjs.xlsx");
     });
-
-    // ---------- Chave de API ----------
-    function refreshKeyStatus() {
-      $("key-status").textContent = getKey()
-        ? "Chave salva: usando a API comercial do CNPJá."
-        : "Sem chave: usando a API pública gratuita (5 consultas por minuto).";
-    }
-    $("apikey").value = getKey();
-    $("save-key").addEventListener("click", () => {
-      try {
-        const v = $("apikey").value.trim();
-        if (v) localStorage.setItem("cnpja_key", v); else localStorage.removeItem("cnpja_key");
-      } catch {}
-      refreshKeyStatus();
-    });
-    refreshKeyStatus();
   </script>
 </body>
 </html>
