@@ -1,5 +1,5 @@
 {
-  "atualizado_em": "2026-11-12",
+  "atualizado_em": "2026-11-13",
   "aliquota_interna": 17,
   "fecomp": 2,
   "aliquotas_interestaduais": [
@@ -11,5 +11,6 @@
     "aliquota_interna": "Lei Estadual nº 1.810/1997, art. 41, III, a (alíquota interna padrão de MS)",
     "fecomp": "Lei Estadual nº 1.810/1997, art. 41-A (adicional de 2 p.p. ao FECOMP sobre mercadorias específicas)"
   },
-  "observacao": "Valores padrão da calculadora. Itens do Subanexo I com alíquota implícita diferente continuam sendo detectados automaticamente."
+  "observacao": "Valores padrão da calculadora. Itens do Subanexo I com alíquota implícita diferente continuam sendo detectados automaticamente.",
+  "acompanhar": "Em 11/11/2026 a imprensa noticiou que o governo de MS estuda elevar a alíquota modal de 17% para 19%-21%; até 13/11/2026 nenhum projeto de lei havia sido enviado à Assembleia. Só alterar com lei publicada e data de vigência."
 }
