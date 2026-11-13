@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CT Price — Retenções em Notas de Serviço</title>
+  <meta name="description" content="Selecione uma pasta com os XMLs das notas fiscais de serviço (NFS-e) e veja as retenções de cada nota: ISS, IRRF, PIS, COFINS, CSLL e INSS." />
+  <style>
+    :root {
+      --bg: #04201f;
+      --surface: #0a2f2c;
+      --surface-2: #0e3a35;
+      --border: #1c5148;
+      --text: #eef7f3;
+      --muted: #9dbbb0;
+      --accent: #17a567;
+      --accent-2: #5fe0a8;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --bad: #f87171;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(1100px 700px at -5% 35%, rgba(23, 165, 103, .35) 0%, transparent 60%),
+                  radial-gradient(900px 600px at 110% 0%, #0b3a4a 0%, transparent 55%),
+                  var(--bg);
+      background-attachment: fixed;
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    .hero {
+      height: clamp(150px, 26vw, 300px);
+      background: #04201f url("assets/ct-price.webp") center / cover no-repeat;
+      border-bottom: 1px solid var(--border);
+    }
+    header { max-width: 1280px; margin: 0 auto; padding: 28px 24px 24px; text-align: center; }
+    h1 {
+      font-size: clamp(1.7rem, 4.5vw, 2.6rem);
+      margin: 4px 0 10px;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .subtitle { color: var(--muted); max-width: 680px; margin: 0 auto; }
+    main { max-width: 1280px; margin: 0 auto; padding: 0 24px 64px; }
+
+    .panel {
+      background: linear-gradient(180deg, var(--surface-2), var(--surface));
+      border: 1px solid var(--border); border-radius: var(--radius); padding: 24px;
+    }
+    .panel + .panel { margin-top: 18px; }
+    [hidden] { display: none !important; }
+
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    input[type="search"] {
+      flex: 1 1 240px; padding: 11px 16px; border-radius: 12px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text); font-size: 15px; outline: none;
+    }
+    input:focus { border-color: var(--accent); }
+    .check { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+    .check input { width: 16px; height: 16px; accent-color: var(--accent); }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--surface); color: var(--text);
+      font-size: 14px; cursor: pointer; text-decoration: none;
+    }
+    .btn:hover:not(:disabled) { border-color: var(--accent); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .hint { color: var(--muted); font-size: 13px; margin-top: 10px; }
+    .error { color: var(--bad); font-size: 14px; margin-top: 12px; }
+
+    .drop {
+      border: 2px dashed var(--border); border-radius: var(--radius); padding: 36px 20px;
+      text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+    }
+    .drop:hover, .drop.over { border-color: var(--accent); background: rgba(23, 165, 103, .1); }
+    .drop strong { display: block; font-size: 17px; margin-bottom: 4px; }
+    .drop span { color: var(--muted); font-size: 14px; }
+
+    .status { color: var(--muted); font-size: 14px; }
+    .verdict { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0 6px; }
+    .box { flex: 1 1 180px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .box .label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+    .box .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+    .box .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+
+    .summary { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .pill { font-size: 13px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg); }
+    .pill b { color: var(--accent-2); }
+
+    .table-wrap { overflow: auto; max-height: 70vh; margin-top: 16px; border: 1px solid var(--border); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1500px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; vertical-align: top; }
+    th { background: var(--bg); color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; position: sticky; top: 0; z-index: 1; }
+    th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td.wrap { white-space: normal; min-width: 200px; }
+    td.zero { color: #5d7d73; }
+    td.ret { color: var(--accent-2); font-weight: 600; }
+    td small { display: block; color: var(--muted); font-size: 12px; }
+    tbody tr:last-child td { border-bottom: none; }
+    tfoot td { background: var(--bg); font-weight: 700; position: sticky; bottom: 0; border-top: 1px solid var(--border); border-bottom: none; }
+    tr.off td { opacity: .55; }
+    .tag {
+      display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+      border: 1px solid var(--accent); color: var(--accent-2); margin: 0 4px 2px 0;
+    }
+    .tag.none { border-color: var(--border); color: var(--muted); font-weight: 400; }
+    .tag.bad { border-color: var(--bad); color: var(--bad); }
+
+    details { margin-top: 16px; font-size: 14px; }
+    details summary { cursor: pointer; color: var(--warn); }
+    details ul { margin: 8px 0 0 20px; color: var(--muted); }
+    details li { margin-top: 2px; word-break: break-all; }
+
+    .note { color: var(--muted); font-size: 13px; }
+    .note p + p { margin-top: 8px; }
+    footer { text-align: center; color: var(--muted); font-size: 13px; padding: 24px; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+  <div class="hero" role="img" aria-label="CT Price Organização Contábil"></div>
+
+  <header>
+    <h1>Retenções em Notas de Serviço</h1>
+    <p class="subtitle">
+      Selecione a pasta com os XMLs das notas fiscais de serviço e veja, nota a nota, o que foi retido de
+      <strong>ISS, IRRF, PIS, COFINS, CSLL e INSS</strong>.
+    </p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Selecionar pasta com as notas">
+        <strong>Arraste a pasta aqui ou clique para selecionar</strong>
+        <span>Arquivos .xml de NFS-e — as subpastas também são lidas</span>
+        <input type="file" id="dir" webkitdirectory multiple hidden />
+        <input type="file" id="files" accept=".xml,text/xml,application/xml" multiple hidden />
+      </div>
+      <p class="hint">
+        As notas são lidas no seu navegador; nenhum arquivo é enviado para a internet.
+        Prefere escolher arquivos avulsos? <a href="#" id="pick-files" style="color:var(--accent-2)">Selecionar arquivos</a>
+      </p>
+      <p class="error" id="error" hidden></p>
+      <p class="status" id="status" style="margin-top:12px" hidden></p>
+    </section>
+
+    <section class="panel" id="results" hidden>
+      <div class="verdict" id="boxes" style="margin-top:0"></div>
+      <div class="summary" id="summary"></div>
+
+      <div class="row" style="margin-top:18px">
+        <input type="search" id="search" placeholder="Filtrar por prestador, tomador, CNPJ ou número…" aria-label="Filtrar notas" />
+        <label class="check"><input type="checkbox" id="only-ret" /> Somente notas com retenção</label>
+        <button class="btn" id="dl-xlsx">Baixar (.xlsx)</button>
+        <button class="btn" id="dl-csv">Baixar (.csv)</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nota</th><th>Emissão</th><th>Prestador</th><th>Tomador</th>
+              <th class="num">Valor serviços</th><th>Retenções</th>
+              <th class="num">ISS</th><th class="num">IRRF</th><th class="num">PIS</th><th class="num">COFINS</th>
+              <th class="num">CSLL</th><th class="num">INSS</th><th class="num">Outras</th>
+              <th class="num">Total retido</th><th class="num">Valor líquido</th><th>Observações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+          <tfoot id="tfoot"></tfoot>
+        </table>
+      </div>
+
+      <details id="skipped" hidden>
+        <summary id="skipped-title"></summary>
+        <ul id="skipped-list"></ul>
+      </details>
+    </section>
+
+    <section class="panel">
+      <div class="note">
+        <p>
+          <strong>Como é lido:</strong> a página reconhece o XML da NFS-e do <strong>padrão nacional</strong>
+          (Emissor Nacional / ADN), do padrão <strong>ABRASF</strong> (usado pela maioria das prefeituras) e da
+          <strong>Nota Paulistana</strong> (São Paulo). Arquivos em PDF não são lidos — baixe o XML da nota no
+          portal da prefeitura ou peça ao prestador.
+        </p>
+        <p>
+          No padrão nacional, PIS, COFINS e CSLL retidos vêm somados em um único campo; a página separa os valores
+          conforme o tipo de retenção informado na nota. Notas canceladas ou repetidas na pasta aparecem na lista,
+          mas não entram nos totais. Confira os valores com o documento original antes de recolher.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer>CT Price Organização Contábil</footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+  <script>
+    const $ = id => document.getElementById(id);
+    const TAXES = [
+      ["iss", "ISS"], ["irrf", "IRRF"], ["pis", "PIS"], ["cofins", "COFINS"],
+      ["csll", "CSLL"], ["inss", "INSS"], ["outras", "Outras"]
+    ];
+
+    // ---------- Utilidades ----------
+    const round2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
+    function parseNum(value) {
+      let s = String(value ?? "").trim().replace(/[^\d.,-]/g, "");
+      if (!s) return 0;
+      if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+      const n = parseFloat(s);
+      return Number.isFinite(n) ? n : 0;
+    }
+    const money = n => n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    function formatDate(value) {
+      const s = String(value || "").trim();
+      let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+      if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+      m = /^(\d{2})\/(\d{2})\/(\d{4})/.exec(s);
+      if (m) return m[0];
+      m = /^(\d{4})(\d{2})(\d{2})$/.exec(s);
+      return m ? `${m[3]}/${m[2]}/${m[1]}` : s;
+    }
+    function formatDoc(value) {
+      const d = String(value || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+      if (d.length === 14) return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
+      if (d.length === 11) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+      return d;
+    }
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text != null) node.textContent = text;
+      return node;
+    }
+
+    // ---------- Leitura do XML (ignora namespaces e maiúsculas/minúsculas) ----------
+    const lname = n => (n.localName || n.nodeName || "").toLowerCase();
+    // Índice dos descendentes de um nó, para buscar campos pelo nome.
+    function scope(node) {
+      const all = node ? [...node.getElementsByTagName("*")] : [];
+      const self = {
+        node,
+        first(...names) {
+          for (const name of names) {
+            const hit = all.find(e => lname(e) === name);
+            if (hit) return hit;
+          }
+          return null;
+        },
+        // Primeiro campo "folha" (sem elementos filhos) com um dos nomes, que tenha texto.
+        text(...names) {
+          for (const name of names) {
+            const hit = all.find(e => lname(e) === name && !e.children.length && e.textContent.trim() !== "");
+            if (hit) return hit.textContent.trim();
+          }
+          return "";
+        },
+        num(...names) { return parseNum(self.text(...names)); },
+        sub(...names) { return scope(self.first(...names)); },
+        has(...names) { return !!self.first(...names); }
+      };
+      return self;
+    }
+    const child = (node, name) => [...node.children].find(e => lname(e) === name);
+    const childText = (node, name) => { const c = child(node, name); return c ? c.textContent.trim() : ""; };
+
+    function finish(n) {
+      TAXES.forEach(([k]) => { n[k] = round2(n[k] || 0); });
+      n.total = round2(TAXES.reduce((sum, [k]) => sum + n[k], 0));
+      if (!n.liquido && n.servicos) { n.liquido = round2(n.servicos - n.total); n.liquidoCalc = true; }
+      return n;
+    }
+
+    // NFS-e padrão nacional (Emissor Nacional / ADN)
+    function parseNacional(inf) {
+      const s = scope(inf);
+      const emit = s.has("emit") ? s.sub("emit") : s.sub("prest");
+      const toma = s.sub("toma");
+      const obs = [];
+      const n = {
+        layout: "Nacional",
+        numero: s.text("nnfse"),
+        emissao: s.text("dhemi", "dhproc", "dcompet"),
+        prestNome: emit.text("xnome") || s.sub("prest").text("xnome"),
+        prestDoc: emit.text("cnpj", "cpf"),
+        tomNome: toma.text("xnome"),
+        tomDoc: toma.text("cnpj", "cpf", "nif"),
+        servicos: s.num("vserv"),
+        liquido: s.num("vliq"),
+        obs
+      };
+
+      // ISS: 2 = retido pelo tomador, 3 = retido pelo intermediário
+      const tpIss = s.text("tpretissqn");
+      if (tpIss === "2" || tpIss === "3") {
+        n.iss = s.num("vissqn");
+        if (!n.iss) {
+          const aliq = s.num("paliqaplic", "paliq");
+          n.iss = (s.num("vbc") || n.servicos) * aliq / 100;
+          obs.push(n.iss ? "ISS retido calculado pela alíquota (valor não informado)" : "ISS marcado como retido, sem valor informado");
+        }
+        if (tpIss === "3") obs.push("ISS retido pelo intermediário");
+      }
+      n.irrf = s.num("vretirrf");
+      n.inss = s.num("vretcp");
+
+      // PIS/COFINS/CSLL: a partir da NT 007, vRetCSLL traz a soma do que foi retido dos três.
+      const tp = s.text("tpretpiscofins");
+      const vPis = s.num("vpis"), vCofins = s.num("vcofins"), vRet = s.num("vretcsll");
+      if (tp === "1") {                       // layout antigo: PIS/COFINS retidos, CSLL à parte
+        n.pis = vPis; n.cofins = vCofins; n.csll = vRet;
+      } else if (/^[3-9]$/.test(tp)) {
+        const pisRet = "3459".includes(tp), cofinsRet = "3467".includes(tp), csllRet = "3789".includes(tp);
+        n.pis = pisRet ? Math.min(vPis, vRet || vPis) : 0;
+        n.cofins = cofinsRet ? Math.min(vCofins, Math.max((vRet || vCofins) - n.pis, 0)) : 0;
+        const rest = round2(Math.max(vRet - n.pis - n.cofins, 0));
+        n.csll = rest;
+        if (rest && !csllRet) obs.push("Valor de contribuições retidas maior que PIS/COFINS da nota — diferença lançada em CSLL");
+        if (((pisRet && !vPis) || (cofinsRet && !vCofins)) && vRet) obs.push("PIS/COFINS/CSLL retidos informados em valor único — conferir a separação");
+      } else {
+        n.csll = vRet;                        // 0, 2 ou não informado
+        if (vRet && tp === "0") obs.push("Nota informa contribuições não retidas, mas traz valor de retenção");
+      }
+
+      finish(n);
+      const declared = s.num("vtotalret");
+      if (declared && Math.abs(declared - n.total) > 0.011) {
+        obs.push(`Total de retenções informado na nota: R$ ${money(declared)}`);
+      }
+      return n;
+    }
+
+    // ABRASF, Nota Paulistana e variações municipais com os mesmos nomes de campo
+    function parseGenerico(node, layout) {
+      const s = scope(node);
+      const party = (containers, nameTags) => {
+        let doc = "", nome = "";
+        for (const c of containers) {
+          const sub = s.sub(c);
+          if (!sub.node) continue;
+          doc = doc || sub.text("cnpj", "cpf");
+          nome = nome || sub.text("razaosocial", "nome", "nomefantasia");
+        }
+        return { doc, nome: nome || s.text(...nameTags) };
+      };
+      const prest = party(["prestadorservico", "prestador", "cpfcnpjprestador"], ["razaosocialprestador"]);
+      const tom = party(["tomadorservico", "tomador", "cpfcnpjtomador"], ["razaosocialtomador"]);
+      const obs = [];
+      const n = {
+        layout,
+        numero: childText(node, "numero") || s.text("numeronfe", "numeronfse", "numeronota", "numero"),
+        emissao: childText(node, "dataemissao") || s.text("dataemissaonfe", "dataemissaonfse", "dataemissao", "datahoraemissao"),
+        prestNome: prest.nome, prestDoc: prest.doc,
+        tomNome: tom.nome, tomDoc: tom.doc,
+        servicos: s.num("valorservicos", "valorservico", "valortotalservicos"),
+        liquido: s.num("valorliquidonfse", "valorliquido"),
+        pis: s.num("valorpis"),
+        cofins: s.num("valorcofins"),
+        inss: s.num("valorinss"),
+        irrf: s.num("valorir", "valorirrf"),
+        csll: s.num("valorcsll"),
+        outras: s.num("outrasretencoes", "valoroutrasretencoes"),
+        obs
+      };
+
+      const flag = s.text("issretido").toLowerCase();
+      const retido = ["1", "true", "sim", "s"].includes(flag);
+      n.iss = s.num("valorissretido");
+      if (!n.iss && retido) {
+        n.iss = s.num("valoriss");
+        if (!n.iss) {
+          let aliq = s.num("aliquota", "aliquotaservicos");
+          if (aliq >= 1) aliq /= 100;         // alíquota pode vir como 5 ou 0.05
+          n.iss = (s.num("basecalculo") || n.servicos) * aliq;
+          obs.push(n.iss ? "ISS retido calculado pela alíquota (valor não informado)" : "ISS marcado como retido, sem valor informado");
+        }
+      }
+
+      const status = s.text("statusnfe").toUpperCase();
+      if (s.has("nfsecancelamento", "cancelamentonfse") || status === "C") n.cancelada = true;
+      return finish(n);
+    }
+
+    // Devolve as notas encontradas em um XML (um arquivo pode trazer várias).
+    function parseXml(text) {
+      const doc = new DOMParser().parseFromString(text, "application/xml");
+      if (doc.getElementsByTagName("parsererror").length) throw new Error("XML inválido ou corrompido");
+      const all = [...doc.getElementsByTagName("*")];
+      const notes = [];
+
+      const infs = all.filter(e => lname(e) === "infnfse");
+      infs.forEach(inf => {
+        const s = scope(inf);
+        if (s.has("nnfse") || s.has("infdps")) return notes.push(parseNacional(inf));
+        // No ABRASF o cancelamento fica ao lado da nota, dentro de CompNfse
+        const comp = inf.parentNode && inf.parentNode.parentNode;
+        const wrap = comp && lname(comp) === "compnfse" ? comp : inf;
+        const note = parseGenerico(inf, "ABRASF");
+        if (wrap !== inf && scope(wrap).has("nfsecancelamento")) note.cancelada = true;
+        notes.push(note);
+      });
+      if (notes.length) return notes;
+
+      const paulistanas = all.filter(e => lname(e) === "nfe" && scope(e).has("chavenfe"));
+      if (paulistanas.length) return paulistanas.map(e => parseGenerico(e, "Paulistana"));
+
+      const root = doc.documentElement;
+      if (["evento", "pedregevento"].includes(lname(root))) throw new Error("Evento de NFS-e (não é a nota)");
+      if (scope(root).has("valorservicos", "valorservico", "valortotalservicos")) {
+        return [parseGenerico(root, "Municipal")];
+      }
+      throw new Error("XML não reconhecido como NFS-e");
+    }
+
+    // Respeita a codificação declarada no XML (muitas prefeituras usam ISO-8859-1).
+    async function readText(file) {
+      const buf = await file.arrayBuffer();
+      const head = new TextDecoder("latin1").decode(buf.slice(0, 200));
+      const m = /encoding\s*=\s*["']([\w.-]+)["']/i.exec(head);
+      try { return new TextDecoder(m ? m[1] : "utf-8").decode(buf); }
+      catch { return new TextDecoder("utf-8").decode(buf); }
+    }
+
+    // ---------- Processamento da pasta ----------
+    const state = { notes: [], skipped: [], folder: "" };
+
+    async function processFiles(entries) {
+      const err = $("error"), status = $("status");
+      err.hidden = true;
+      if (!entries.length) {
+        err.textContent = "Nenhum arquivo encontrado na seleção.";
+        err.hidden = false;
+        return;
+      }
+      entries.sort((a, b) => a.path.localeCompare(b.path, "pt-BR", { numeric: true }));
+      state.notes = []; state.skipped = [];
+      state.folder = entries[0].path.includes("/") ? entries[0].path.split("/")[0] : "";
+      status.hidden = false;
+      $("results").hidden = true;
+
+      for (let i = 0; i < entries.length; i++) {
+        const { file, path } = entries[i];
+        if (i % 20 === 0) {
+          status.textContent = `Lendo ${i + 1} de ${entries.length} arquivo(s)…`;
+          await new Promise(r => setTimeout(r));
+        }
+        const name = file.name.toLowerCase();
+        if (name.startsWith(".") || name === "thumbs.db" || name === "desktop.ini") continue;
+        if (!name.endsWith(".xml")) {
+          state.skipped.push({ path, reason: name.endsWith(".pdf") ? "PDF não é lido — use o XML da nota" : "Não é um arquivo XML" });
+          continue;
+        }
+        try {
+          parseXml(await readText(file)).forEach(n => { n.arquivo = path; state.notes.push(n); });
+        } catch (e) {
+          state.skipped.push({ path, reason: e.message || "Não foi possível ler o arquivo" });
+        }
+      }
+
+      // Notas repetidas na pasta (mesmo prestador e número) não entram nos totais
+      const seen = new Set();
+      state.notes.forEach(n => {
+        const key = `${n.prestDoc.replace(/\W/g, "")}|${n.numero}`;
+        if (n.numero && n.prestDoc && seen.has(key)) n.duplicada = true;
+        seen.add(key);
+        if (n.cancelada) n.obs.unshift("Nota cancelada");
+        if (n.duplicada) n.obs.unshift("Nota repetida na pasta");
+        if (n.liquidoCalc) n.obs.push("Valor líquido calculado (serviços − retenções)");
+      });
+
+      status.textContent = `${entries.length} arquivo(s) analisado(s)` + (state.folder ? ` na pasta "${state.folder}"` : "") + ".";
+      if (!state.notes.length && !state.skipped.length) {
+        err.textContent = "Nenhuma nota fiscal encontrada na seleção.";
+        err.hidden = false;
+        return;
+      }
+      $("search").value = "";
+      $("only-ret").checked = false;
+      render();
+      $("results").hidden = false;
+    }
+
+    const counts = n => !n.cancelada && !n.duplicada;
+    const retainedTaxes = n => TAXES.filter(([k]) => n[k] > 0).map(([, label]) => label);
+
+    function visibleNotes() {
+      const term = $("search").value.trim().toLowerCase();
+      const digits = term.replace(/\D/g, "");
+      const only = $("only-ret").checked;
+      return state.notes.filter(n => {
+        if (only && !n.total) return false;
+        if (!term) return true;
+        const hay = [n.numero, n.prestNome, n.tomNome, n.arquivo].join(" ").toLowerCase();
+        return hay.includes(term) || (digits.length >= 3 && (n.prestDoc + " " + n.tomDoc).replace(/\D/g, "").includes(digits));
+      });
+    }
+
+    function box(label, value, cls, sub) {
+      const b = el("div", "box");
+      b.append(el("div", "label", label), el("div", "value " + (cls || ""), value));
+      if (sub) b.append(el("div", "sub", sub));
+      return b;
+    }
+    function numCell(value, cls) {
+      return el("td", "num " + (value ? cls || "" : "zero"), value ? money(value) : "—");
+    }
+
+    function render() {
+      const valid = state.notes.filter(counts);
+      const withRet = valid.filter(n => n.total > 0);
+      const sum = (list, k) => round2(list.reduce((t, n) => t + n[k], 0));
+
+      const boxes = $("boxes");
+      boxes.innerHTML = "";
+      const off = state.notes.length - valid.length;
+      boxes.append(
+        box("Notas lidas", String(state.notes.length), "", off ? `${off} cancelada(s)/repetida(s) fora dos totais` : ""),
+        box("Com retenção", String(withRet.length), withRet.length ? "ok" : "", `${valid.length - withRet.length} sem retenção`),
+        box("Total retido", "R$ " + money(sum(valid, "total")), withRet.length ? "ok" : ""),
+        box("Valor dos serviços", "R$ " + money(sum(valid, "servicos")))
+      );
+
+      const summary = $("summary");
+      summary.innerHTML = "";
+      TAXES.forEach(([k, label]) => {
+        const total = sum(valid, k);
+        if (!total) return;
+        const pill = el("span", "pill", `${label}: `);
+        pill.append(el("b", "", "R$ " + money(total)), ` · ${valid.filter(n => n[k] > 0).length} nota(s)`);
+        summary.append(pill);
+      });
+      if (!summary.children.length) summary.append(el("span", "pill", "Nenhuma retenção encontrada nas notas lidas."));
+
+      const list = visibleNotes();
+      const tbody = $("tbody");
+      tbody.innerHTML = "";
+      list.forEach(n => {
+        const tr = el("tr", counts(n) ? "" : "off");
+        const nota = el("td", "", n.numero || "(sem número)");
+        nota.append(el("small", "", n.layout));
+        nota.title = n.arquivo;
+        const prest = el("td", "wrap", n.prestNome || "—");
+        prest.append(el("small", "", formatDoc(n.prestDoc)));
+        const tom = el("td", "wrap", n.tomNome || "—");
+        tom.append(el("small", "", formatDoc(n.tomDoc)));
+        const tags = el("td", "wrap");
+        const taxes = retainedTaxes(n);
+        if (n.cancelada) tags.append(el("span", "tag bad", "Cancelada"));
+        if (n.duplicada) tags.append(el("span", "tag bad", "Repetida"));
+        if (taxes.length) taxes.forEach(t => tags.append(el("span", "tag", t)));
+        else tags.append(el("span", "tag none", "Sem retenção"));
+        tr.append(nota, el("td", "", formatDate(n.emissao)), prest, tom, numCell(n.servicos), tags);
+        TAXES.forEach(([k]) => tr.append(numCell(n[k], "ret")));
+        tr.append(numCell(n.total, "ret"), numCell(n.liquido), el("td", "wrap", n.obs.join(" · ")));
+        tbody.appendChild(tr);
+      });
+      if (!list.length) {
+        const td = el("td", "", "Nenhuma nota para o filtro informado.");
+        td.colSpan = 16;
+        tbody.appendChild(el("tr")).appendChild(td);
+      }
+
+      const shown = list.filter(counts);
+      const tfoot = $("tfoot");
+      tfoot.innerHTML = "";
+      if (shown.length) {
+        const tr = el("tr");
+        const label = el("td", "", `Total — ${shown.length} nota(s)`);
+        label.colSpan = 4;
+        tr.append(label, numCell(sum(shown, "servicos")), el("td"));
+        TAXES.forEach(([k]) => tr.append(numCell(sum(shown, k), "ret")));
+        tr.append(numCell(sum(shown, "total"), "ret"), numCell(sum(shown, "liquido")), el("td"));
+        tfoot.appendChild(tr);
+      }
+
+      $("skipped").hidden = !state.skipped.length;
+      $("skipped-title").textContent = `${state.skipped.length} arquivo(s) não lido(s)`;
+      const ul = $("skipped-list");
+      ul.innerHTML = "";
+      state.skipped.forEach(s => ul.append(el("li", "", `${s.path} — ${s.reason}`)));
+      $("dl-xlsx").disabled = $("dl-csv").disabled = !state.notes.length;
+    }
+    $("search").addEventListener("input", render);
+    $("only-ret").addEventListener("change", render);
+
+    // ---------- Seleção da pasta ----------
+    const drop = $("drop"), dirInput = $("dir"), filesInput = $("files");
+    const fromInput = input => [...input.files].map(file => ({ file, path: file.webkitRelativePath || file.name }));
+    drop.addEventListener("click", () => dirInput.click());
+    drop.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); dirInput.click(); } });
+    $("pick-files").addEventListener("click", e => { e.preventDefault(); filesInput.click(); });
+    [dirInput, filesInput].forEach(input => input.addEventListener("change", () => {
+      const entries = fromInput(input);
+      input.value = "";
+      if (entries.length) processFiles(entries);
+    }));
+
+    // Percorre as pastas arrastadas (inclusive subpastas).
+    async function fromDrop(dataTransfer) {
+      const roots = [...(dataTransfer.items || [])]
+        .map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+      if (!roots.length) return [...dataTransfer.files].map(file => ({ file, path: file.name }));
+      const out = [];
+      async function walk(entry, prefix) {
+        if (entry.isFile) {
+          const file = await new Promise((res, rej) => entry.file(res, rej));
+          out.push({ file, path: prefix + file.name });
+        } else if (entry.isDirectory) {
+          const reader = entry.createReader();
+          for (;;) {
+            const batch = await new Promise((res, rej) => reader.readEntries(res, rej));
+            if (!batch.length) break;
+            for (const e of batch) await walk(e, prefix + entry.name + "/");
+          }
+        }
+      }
+      for (const r of roots) await walk(r, "");
+      return out;
+    }
+    ["dragenter", "dragover"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add("over"); }));
+    ["dragleave", "drop"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove("over"); }));
+    drop.addEventListener("drop", async e => {
+      try { processFiles(await fromDrop(e.dataTransfer)); }
+      catch { $("error").textContent = "Não consegui ler a pasta arrastada. Tente clicar e selecionar a pasta."; $("error").hidden = false; }
+    });
+
+    // ---------- Exportação ----------
+    function exportRows() {
+      const header = ["Arquivo", "Número", "Emissão", "Layout", "Prestador", "CNPJ/CPF prestador", "Tomador", "CNPJ/CPF tomador",
+        "Valor serviços", "Retenções", ...TAXES.map(([, l]) => l === "Outras" ? "Outras retenções" : l + " retido"),
+        "Total retido", "Valor líquido", "Situação", "Observações"];
+      const rows = visibleNotes().map(n => [
+        n.arquivo, n.numero, formatDate(n.emissao), n.layout, n.prestNome, formatDoc(n.prestDoc), n.tomNome, formatDoc(n.tomDoc),
+        n.servicos, retainedTaxes(n).join(", ") || "Sem retenção", ...TAXES.map(([k]) => n[k]),
+        n.total, n.liquido, n.cancelada ? "Cancelada" : n.duplicada ? "Repetida" : "Normal", n.obs.join(" · ")
+      ]);
+      return [header, ...rows];
+    }
+    function download(type) {
+      const name = `retencoes-${(state.folder || "notas").replace(/[^\w.-]+/g, "_")}`;
+      if (type === "csv") {
+        const cell = c => typeof c === "number" ? c.toFixed(2).replace(".", ",")
+          : /[";\r\n]/.test(c = String(c ?? "")) ? `"${c.replace(/"/g, '""')}"` : c;
+        const csv = "﻿" + exportRows().map(r => r.map(cell).join(";")).join("\r\n");
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+        a.download = name + ".csv";
+        a.click();
+        URL.revokeObjectURL(a.href);
+        return;
+      }
+      if (!window.XLSX) {
+        $("error").textContent = "Não foi possível carregar o gerador de planilhas. Verifique sua conexão ou baixe em .csv.";
+        $("error").hidden = false;
+        return;
+      }
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(exportRows()), "Retenções");
+      XLSX.writeFile(wb, name + ".xlsx");
+    }
+    $("dl-xlsx").addEventListener("click", () => download("xlsx"));
+    $("dl-csv").addEventListener("click", () => download("csv"));
+  </script>
+</body>
+</html>
