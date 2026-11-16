@@ -93,11 +93,12 @@
     .pill b { color: var(--accent-2); }
 
     .table-wrap { overflow: auto; max-height: 70vh; margin-top: 16px; border: 1px solid var(--border); border-radius: 12px; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1500px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1900px; }
     th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; vertical-align: top; }
     th { background: var(--bg); color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; position: sticky; top: 0; z-index: 1; }
     th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
     td.wrap { white-space: normal; min-width: 200px; }
+    td.desc { white-space: normal; min-width: 280px; max-width: 360px; }
     td.zero { color: #5d7d73; }
     td.ret { color: var(--accent-2); font-weight: 600; }
     td small { display: block; color: var(--muted); font-size: 12px; }
@@ -129,7 +130,7 @@
     <h1>Retenções em Notas de Serviço</h1>
     <p class="subtitle">
       Selecione a pasta com os XMLs das notas fiscais de serviço e veja, nota a nota, o que foi retido de
-      <strong>ISS, IRRF, PIS, COFINS, CSLL e INSS</strong>.
+      <strong>ISS, IRRF, PIS, COFINS, CSLL e INSS</strong>, com o código e a descrição do serviço.
     </p>
   </header>
 
@@ -154,7 +155,7 @@
       <div class="summary" id="summary"></div>
 
       <div class="row" style="margin-top:18px">
-        <input type="search" id="search" placeholder="Filtrar por prestador, tomador, CNPJ ou número…" aria-label="Filtrar notas" />
+        <input type="search" id="search" placeholder="Filtrar por prestador, tomador, CNPJ, número ou serviço…" aria-label="Filtrar notas" />
         <label class="check"><input type="checkbox" id="only-ret" /> Somente notas com retenção</label>
         <button class="btn" id="dl-xlsx">Baixar (.xlsx)</button>
         <button class="btn" id="dl-csv">Baixar (.csv)</button>
@@ -165,6 +166,7 @@
           <thead>
             <tr>
               <th>Nota</th><th>Emissão</th><th>Prestador</th><th>Tomador</th>
+              <th>Código do serviço</th><th>Descrição do serviço</th>
               <th class="num">Valor serviços</th><th>Retenções</th>
               <th class="num">ISS</th><th class="num">IRRF</th><th class="num">PIS</th><th class="num">COFINS</th>
               <th class="num">CSLL</th><th class="num">INSS</th><th class="num">Outras</th>
@@ -234,6 +236,12 @@
       if (d.length === 11) return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
       return d;
     }
+    // Código de tributação nacional: 6 dígitos (item, subitem e desdobro da lista da LC 116)
+    function formatTribNac(code) {
+      const d = String(code || "").replace(/\D/g, "");
+      return d.length === 6 ? `${d.slice(0, 2)}.${d.slice(2, 4)}.${d.slice(4)}` : String(code || "").trim();
+    }
+    const oneLine = text => String(text || "").replace(/\s+/g, " ").trim();
     function el(tag, className, text) {
       const node = document.createElement(tag);
       if (className) node.className = className;
@@ -293,6 +301,10 @@
         prestDoc: emit.text("cnpj", "cpf"),
         tomNome: toma.text("xnome"),
         tomDoc: toma.text("cnpj", "cpf", "nif"),
+        codServ: formatTribNac(s.text("ctribnac")),
+        codNome: s.text("xtribnac"),
+        codMun: s.text("ctribmun"),
+        descServ: s.text("xdescserv"),
         servicos: s.num("vserv"),
         liquido: s.num("vliq"),
         obs
@@ -360,6 +372,10 @@
         emissao: childText(node, "dataemissao") || s.text("dataemissaonfe", "dataemissaonfse", "dataemissao", "datahoraemissao"),
         prestNome: prest.nome, prestDoc: prest.doc,
         tomNome: tom.nome, tomDoc: tom.doc,
+        codServ: s.text("itemlistaservico", "codigoservico", "codigoatividade"),
+        codNome: "",
+        codMun: s.text("codigotributacaomunicipio"),
+        descServ: s.text("discriminacao", "descricaoservico", "descricao"),
         servicos: s.num("valorservicos", "valorservico", "valortotalservicos"),
         liquido: s.num("valorliquidonfse", "valorliquido"),
         pis: s.num("valorpis"),
@@ -498,7 +514,7 @@
       return state.notes.filter(n => {
         if (only && !n.total) return false;
         if (!term) return true;
-        const hay = [n.numero, n.prestNome, n.tomNome, n.arquivo].join(" ").toLowerCase();
+        const hay = [n.numero, n.prestNome, n.tomNome, n.arquivo, n.codServ, n.codMun, n.codNome, n.descServ].join(" ").toLowerCase();
         return hay.includes(term) || (digits.length >= 3 && (n.prestDoc + " " + n.tomDoc).replace(/\D/g, "").includes(digits));
       });
     }
@@ -557,14 +573,21 @@
         if (n.duplicada) tags.append(el("span", "tag bad", "Repetida"));
         if (taxes.length) taxes.forEach(t => tags.append(el("span", "tag", t)));
         else tags.append(el("span", "tag none", "Sem retenção"));
-        tr.append(nota, el("td", "", formatDate(n.emissao)), prest, tom, numCell(n.servicos), tags);
+        const cod = el("td", "wrap", n.codServ || n.codMun || "—");
+        const codSub = [n.codServ && n.codMun ? "Municipal: " + n.codMun : "", oneLine(n.codNome)].filter(Boolean).join(" · ");
+        if (codSub) cod.append(el("small", "", codSub.length > 90 ? codSub.slice(0, 90) + "…" : codSub));
+        cod.title = oneLine(n.codNome);
+        const full = oneLine(n.descServ);
+        const desc = el("td", "desc", full.length > 160 ? full.slice(0, 160) + "…" : full || "—");
+        desc.title = full;
+        tr.append(nota, el("td", "", formatDate(n.emissao)), prest, tom, cod, desc, numCell(n.servicos), tags);
         TAXES.forEach(([k]) => tr.append(numCell(n[k], "ret")));
         tr.append(numCell(n.total, "ret"), numCell(n.liquido), el("td", "wrap", n.obs.join(" · ")));
         tbody.appendChild(tr);
       });
       if (!list.length) {
         const td = el("td", "", "Nenhuma nota para o filtro informado.");
-        td.colSpan = 16;
+        td.colSpan = 18;
         tbody.appendChild(el("tr")).appendChild(td);
       }
 
@@ -574,7 +597,7 @@
       if (shown.length) {
         const tr = el("tr");
         const label = el("td", "", `Total — ${shown.length} nota(s)`);
-        label.colSpan = 4;
+        label.colSpan = 6;
         tr.append(label, numCell(sum(shown, "servicos")), el("td"));
         TAXES.forEach(([k]) => tr.append(numCell(sum(shown, k), "ret")));
         tr.append(numCell(sum(shown, "total"), "ret"), numCell(sum(shown, "liquido")), el("td"));
@@ -635,10 +658,12 @@
     // ---------- Exportação ----------
     function exportRows() {
       const header = ["Arquivo", "Número", "Emissão", "Layout", "Prestador", "CNPJ/CPF prestador", "Tomador", "CNPJ/CPF tomador",
+        "Código do serviço", "Código de tributação municipal", "Nome do código", "Descrição do serviço",
         "Valor serviços", "Retenções", ...TAXES.map(([, l]) => l === "Outras" ? "Outras retenções" : l + " retido"),
         "Total retido", "Valor líquido", "Situação", "Observações"];
       const rows = visibleNotes().map(n => [
         n.arquivo, n.numero, formatDate(n.emissao), n.layout, n.prestNome, formatDoc(n.prestDoc), n.tomNome, formatDoc(n.tomDoc),
+        n.codServ, n.codMun, oneLine(n.codNome), oneLine(n.descServ),
         n.servicos, retainedTaxes(n).join(", ") || "Sem retenção", ...TAXES.map(([k]) => n[k]),
         n.total, n.liquido, n.cancelada ? "Cancelada" : n.duplicada ? "Repetida" : "Normal", n.obs.join(" · ")
       ]);
