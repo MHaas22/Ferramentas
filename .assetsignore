@@ -1,0 +1,11 @@
+.git
+.gitignore
+.assetsignore
+.wrangler
+node_modules
+cloudflare
+wrangler.jsonc
+LICENSE
+*.py
+*.bat
+__pycache__

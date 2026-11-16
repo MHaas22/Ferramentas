@@ -135,7 +135,7 @@
 
   <main>
     <section class="panel notice" id="offline" hidden>
-      <p><strong>O programa local não está em execução.</strong></p>
+      <p><strong>O serviço de consulta não está configurado.</strong></p>
       <p class="hint">
         O portal da prefeitura não aceita consultas direto desta página. No seu computador, abra a pasta
         do projeto e execute <code>python alvara.py</code> (ou dê dois cliques em <code>alvara.bat</code>
@@ -208,7 +208,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js" defer></script>
   <script>
-    const API = "api/alvara?im=";
+    // Endereço do intermediário publicado na Cloudflare (cloudflare/alvara-worker.js).
+    const WORKER_URL = "https://ferramentas.michaelhaas2210.workers.dev";
     const INTERVAL_MS = 1500; // pausa entre consultas, para não sobrecarregar o portal
 
     const $ = id => document.getElementById(id);
@@ -301,9 +302,9 @@
     async function fetchAlvara(item) {
       let resp;
       try {
-        resp = await fetch(API + item.im, { cache: "no-store" });
+        resp = await fetch((await apiBase) + "api/alvara?im=" + item.im, { cache: "no-store" });
       } catch {
-        throw new Error("Programa local fora do ar. Execute novamente o alvara.py.");
+        throw new Error("Não foi possível falar com o serviço de consulta. Tente novamente.");
       }
       if (resp.ok && (resp.headers.get("Content-Type") || "").includes("pdf")) {
         item.nome = decodeURIComponent(resp.headers.get("X-Nome") || "");
@@ -461,10 +462,16 @@
       XLSX.writeFile(wb, "modelo-inscricoes.xlsx");
     });
 
-    // ---------- Programa local ----------
-    fetch("api/status", { cache: "no-store" })
-      .then(r => { if (!r.ok) throw 0; })
-      .catch(() => { $("offline").hidden = false; });
+    // ---------- Serviço de consulta ----------
+    // Usa o programa local (alvara.py) quando a página é aberta por ele;
+    // senão, o intermediário publicado na Cloudflare.
+    const apiBase = fetch("api/status", { cache: "no-store" })
+      .then(r => r.json()).then(d => { if (!d.ok) throw 0; return ""; })
+      .catch(() => {
+        if (WORKER_URL) return WORKER_URL.replace(/\/+$/, "") + "/";
+        $("offline").hidden = false;
+        return "";
+      });
   </script>
 </body>
 </html>
