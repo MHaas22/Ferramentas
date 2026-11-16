@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CT Price — Busca de Alvará</title>
+  <meta name="description" content="Emita o Alvará de Localização e Funcionamento de Campo Grande/MS em PDF para uma ou várias Inscrições Municipais." />
+  <style>
+    :root {
+      --bg: #04201f;
+      --surface: #0a2f2c;
+      --surface-2: #0e3a35;
+      --border: #1c5148;
+      --text: #eef7f3;
+      --muted: #9dbbb0;
+      --accent: #17a567;
+      --accent-2: #5fe0a8;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --bad: #f87171;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(1100px 700px at -5% 35%, rgba(23, 165, 103, .35) 0%, transparent 60%),
+                  radial-gradient(900px 600px at 110% 0%, #0b3a4a 0%, transparent 55%),
+                  var(--bg);
+      background-attachment: fixed;
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    .hero {
+      height: clamp(150px, 26vw, 300px);
+      background: #04201f url("assets/ct-price.webp") center / cover no-repeat;
+      border-bottom: 1px solid var(--border);
+    }
+    header { max-width: 1100px; margin: 0 auto; padding: 28px 24px 24px; text-align: center; }
+    h1 {
+      font-size: clamp(1.7rem, 4.5vw, 2.6rem);
+      margin: 4px 0 10px;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .subtitle { color: var(--muted); max-width: 640px; margin: 0 auto; }
+    main { max-width: 1100px; margin: 0 auto; padding: 0 24px 64px; }
+
+    .tabs { display: flex; gap: 8px; justify-content: center; margin: 8px 0 20px; flex-wrap: wrap; }
+    .tab {
+      padding: 10px 20px; border-radius: 999px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); cursor: pointer; font-size: 14px;
+    }
+    .tab.active { background: var(--surface-2); color: var(--text); border-color: var(--accent); }
+
+    .panel {
+      background: linear-gradient(180deg, var(--surface-2), var(--surface));
+      border: 1px solid var(--border); border-radius: var(--radius); padding: 24px;
+    }
+    .panel + .panel { margin-top: 18px; }
+    [hidden] { display: none !important; }
+
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    input[type="text"], input[type="password"], textarea {
+      flex: 1 1 260px; padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text); font-size: 16px; outline: none;
+    }
+    input:focus { border-color: var(--accent); }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--surface); color: var(--text);
+      font-size: 14px; cursor: pointer; text-decoration: none;
+    }
+    .btn:hover:not(:disabled) { border-color: var(--accent); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .hint { color: var(--muted); font-size: 13px; margin-top: 10px; }
+    .hint a, .note a { color: var(--accent-2); }
+    .error { color: var(--bad); font-size: 14px; margin-top: 12px; }
+
+    .result { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 20px; }
+    .result h2 { font-size: 20px; }
+    .result .meta { color: var(--muted); font-size: 14px; margin-top: 2px; }
+    .verdict { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0 6px; }
+    .box { flex: 1 1 220px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .box .label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+    .box .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+    .box .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); } .info { color: #5cc8ff; }
+
+    .drop {
+      border: 2px dashed var(--border); border-radius: var(--radius); padding: 36px 20px;
+      text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+    }
+    .drop:hover, .drop.over { border-color: var(--accent); background: rgba(23, 165, 103, .1); }
+    .drop strong { display: block; font-size: 17px; margin-bottom: 4px; }
+    .drop span { color: var(--muted); font-size: 14px; }
+
+    .progress { height: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 999px; overflow: hidden; margin: 14px 0 8px; }
+    .progress > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .3s; }
+    .status { color: var(--muted); font-size: 14px; }
+    .summary { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .pill { font-size: 13px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg); }
+
+    .table-wrap { overflow-x: auto; margin-top: 16px; border: 1px solid var(--border); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 720px; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    th { background: var(--bg); color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; position: sticky; top: 0; }
+    td.wrap { white-space: normal; min-width: 220px; }
+    tr:last-child td { border-bottom: none; }
+
+    textarea { flex: 1 1 100%; width: 100%; min-height: 130px; resize: vertical; font-family: ui-monospace, Consolas, monospace; }
+    textarea:focus { border-color: var(--accent); }
+    .or { text-align: center; color: var(--muted); font-size: 13px; margin: 16px 0; }
+    .drop { padding: 24px 20px; }
+    td a { color: var(--accent-2); }
+    .notice { border-color: var(--warn); margin-bottom: 18px; }
+    .notice code { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; }
+    .note { color: var(--muted); font-size: 13px; margin-top: 18px; }
+    .note p + p { margin-top: 8px; }
+    footer { text-align: center; color: var(--muted); font-size: 13px; padding: 24px; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+  <div class="hero" role="img" aria-label="CT Price Organização Contábil"></div>
+
+  <header>
+    <h1>Busca de Alvará — Campo Grande/MS</h1>
+    <p class="subtitle">
+      Informe uma ou várias <strong>Inscrições Municipais</strong> e baixe o
+      Alvará de Localização e Funcionamento de cada empresa em <strong>PDF</strong>.
+    </p>
+  </header>
+
+  <main>
+    <section class="panel notice" id="offline" hidden>
+      <p><strong>O programa local não está em execução.</strong></p>
+      <p class="hint">
+        O portal da prefeitura não aceita consultas direto desta página. No seu computador, abra a pasta
+        do projeto e execute <code>python alvara.py</code> (ou dê dois cliques em <code>alvara.bat</code>
+        no Windows). A página abrirá sozinha em <code>http://localhost:8765/alvara.html</code>.
+      </p>
+    </section>
+
+    <section class="panel">
+      <textarea id="ims" spellcheck="false" aria-label="Inscrições Municipais"
+                placeholder="Digite ou cole as Inscrições Municipais — uma por linha (ou separadas por vírgula)&#10;Ex.: 178065009"></textarea>
+      <div class="or">ou</div>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Selecionar planilha">
+        <strong>Arraste uma planilha aqui ou clique para selecionar</strong>
+        <span>.xlsx, .xls, .csv ou .txt — a coluna "Inscrição Municipal" é detectada automaticamente</span>
+        <input type="file" id="file" accept=".xlsx,.xls,.csv,.txt" hidden />
+      </div>
+      <p class="hint">
+        A planilha é lida no seu navegador; apenas os números das inscrições são enviados ao portal da prefeitura.
+        <a href="#" id="sample">Baixar planilha modelo</a>
+      </p>
+      <div class="row" style="margin-top:16px">
+        <button class="btn primary" id="start">Buscar alvarás</button>
+        <button class="btn" id="pause" hidden>Pausar</button>
+        <button class="btn" id="clear">Limpar</button>
+      </div>
+      <p class="error" id="error" hidden></p>
+
+      <div id="run" hidden>
+        <div class="result">
+          <p id="info"></p>
+          <div class="progress"><div id="bar"></div></div>
+          <p class="status" id="status"></p>
+          <div class="row" style="margin-top:14px">
+            <button class="btn" id="dl-zip" disabled>Baixar todos (.zip)</button>
+            <button class="btn" id="dl-merged" disabled>Baixar PDF único</button>
+            <button class="btn" id="dl-xlsx" disabled>Baixar relatório (.xlsx)</button>
+          </div>
+          <div class="summary" id="summary"></div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Inscrição Municipal</th><th>Razão social</th><th>Resultado</th><th>PDF</th></tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="note" style="margin-top:0">
+        <p>
+          <strong>Como funciona:</strong> para cada inscrição, a ferramenta consulta o cadastro mobiliário no
+          Portal SIAT da Prefeitura de Campo Grande e emite o alvará, exatamente como na tela
+          <a href="https://siatportal.campogrande.ms.gov.br/servicos/cidadao/alvaraLocalizacaoFuncionamento" target="_blank" rel="noopener">Alvará de Localização e Funcionamento</a>.
+          As consultas são feitas uma de cada vez.
+        </p>
+        <p>
+          Cada emissão gera uma nova via do documento no portal (o PDF traz o número da via e o código de
+          autenticidade). Quando o portal não emite o alvará, o motivo informado por ele aparece na coluna "Resultado".
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer>CT Price Organização Contábil</footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js" defer></script>
+  <script>
+    const API = "api/alvara?im=";
+    const INTERVAL_MS = 1500; // pausa entre consultas, para não sobrecarregar o portal
+
+    const $ = id => document.getElementById(id);
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    function el(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text != null) node.textContent = text;
+      return node;
+    }
+
+    // ---------- Inscrição Municipal ----------
+    // O portal usa 11 dígitos, completando com zeros à esquerda.
+    function cleanIm(value) {
+      const d = String(value ?? "").replace(/\D/g, "");
+      return d && d.length <= 11 && /[1-9]/.test(d) ? d.padStart(11, "0") : "";
+    }
+    function looksLikeIm(value) {
+      const s = String(value ?? "").trim();
+      return /^[\d.\-\/ ]+$/.test(s) && cleanIm(s) !== "";
+    }
+
+    const state = { items: [], running: false, paused: false };
+
+    function showError(msg) {
+      $("error").textContent = msg;
+      $("error").hidden = !msg;
+    }
+
+    // Monta a lista a partir do texto digitado/colado (sem repetir inscrições).
+    function buildItems() {
+      const seen = new Map(state.items.map(i => [i.key, i]));
+      const items = [], used = new Set();
+      $("ims").value.split(/[\n,;\t]+/).map(s => s.trim()).filter(Boolean).forEach(raw => {
+        const im = cleanIm(raw), key = im || "inv:" + raw;
+        if (used.has(key)) return;
+        used.add(key);
+        const old = seen.get(key);
+        items.push(old && (old.status === "done") ? old
+          : { key, raw, im, nome: "", status: im ? "pending" : "invalid", error: im ? "" : "Inscrição inválida", pdf: null });
+      });
+      state.items = items;
+    }
+
+    function fileName(i) {
+      const nome = i.nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 60);
+      return `Alvara_${i.im}${nome ? "_" + nome : ""}.pdf`;
+    }
+    function saveBlob(blob, name) {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    }
+
+    function render() {
+      const tbody = $("tbody");
+      tbody.innerHTML = "";
+      state.items.forEach(i => {
+        const tr = document.createElement("tr");
+        tr.append(el("td", "", i.im || i.raw), el("td", "wrap", i.nome));
+        const label = { pending: "Aguardando", running: "Consultando…", done: "Alvará emitido" }[i.status] || i.error;
+        const res = el("td", "wrap " + (i.status === "done" ? "ok" : i.status === "error" || i.status === "invalid" ? "bad" : ""), label);
+        if (i.status !== "pending" && i.status !== "running") res.style.fontWeight = "700";
+        const pdf = el("td");
+        if (i.pdf) {
+          const a = el("a", "", "Baixar PDF");
+          a.href = "#";
+          a.addEventListener("click", e => { e.preventDefault(); saveBlob(i.pdf, fileName(i)); });
+          pdf.append(a);
+        }
+        tr.append(res, pdf);
+        tbody.append(tr);
+      });
+
+      const total = state.items.length;
+      const finished = state.items.filter(i => i.status !== "pending" && i.status !== "running").length;
+      const ok = state.items.filter(i => i.status === "done").length;
+      $("bar").style.width = total ? (finished / total * 100) + "%" : "0";
+      const summary = $("summary");
+      summary.innerHTML = "";
+      if (ok) summary.append(el("span", "pill ok", `Emitidos: ${ok}`));
+      if (finished - ok) summary.append(el("span", "pill bad", `Não emitidos: ${finished - ok}`));
+      $("dl-zip").disabled = $("dl-merged").disabled = !ok;
+      $("dl-xlsx").disabled = !finished;
+      return { total, finished };
+    }
+
+    async function fetchAlvara(item) {
+      let resp;
+      try {
+        resp = await fetch(API + item.im, { cache: "no-store" });
+      } catch {
+        throw new Error("Programa local fora do ar. Execute novamente o alvara.py.");
+      }
+      if (resp.ok && (resp.headers.get("Content-Type") || "").includes("pdf")) {
+        item.nome = decodeURIComponent(resp.headers.get("X-Nome") || "");
+        item.pdf = await resp.blob();
+        return;
+      }
+      let msg = `Erro na consulta (HTTP ${resp.status}).`;
+      try {
+        const data = await resp.json();
+        msg = data.erro || msg;
+        item.nome = data.nome || "";
+      } catch {}
+      throw new Error(msg);
+    }
+
+    async function run() {
+      if (state.running) return;
+      showError("");
+      buildItems();
+      if (!state.items.length) return showError("Informe ao menos uma Inscrição Municipal.");
+      state.items.forEach(i => { if (i.status === "error") { i.status = "pending"; i.error = ""; } });
+      state.running = true;
+      state.paused = false;
+      $("run").hidden = false;
+      $("start").hidden = true;
+      $("pause").hidden = false;
+      $("pause").textContent = "Pausar";
+      $("ims").disabled = true;
+      const invalid = state.items.filter(i => i.status === "invalid").length;
+      $("info").textContent = `${state.items.length} inscrição(ões)` + (invalid ? ` · ${invalid} inválida(s)` : "");
+
+      let first = true;
+      for (const item of state.items) {
+        if (state.paused) break;
+        if (item.status !== "pending") continue;
+        if (!first) await sleep(INTERVAL_MS);
+        first = false;
+        if (state.paused) break;
+        item.status = "running";
+        const { total, finished } = render();
+        $("status").textContent = `Consultando ${finished + 1} de ${total}…`;
+        try {
+          await fetchAlvara(item);
+          item.status = "done";
+        } catch (e) {
+          item.status = "error";
+          item.error = e.message;
+        }
+      }
+
+      state.running = false;
+      $("ims").disabled = false;
+      $("pause").hidden = true;
+      $("start").hidden = false;
+      const { total, finished } = render();
+      const errors = state.items.filter(i => i.status === "error").length;
+      if (finished < total) {
+        $("status").textContent = `Pausado em ${finished} de ${total}.`;
+        $("start").textContent = "Continuar";
+      } else {
+        $("status").textContent = `Concluído: ${total} inscrição(ões) processada(s).` + (errors ? ` ${errors} sem alvará emitido.` : "");
+        $("start").textContent = errors ? "Tentar novamente os erros" : "Buscar alvarás";
+      }
+    }
+    $("start").addEventListener("click", run);
+    $("pause").addEventListener("click", () => { state.paused = true; $("pause").textContent = "Pausando…"; });
+    $("clear").addEventListener("click", () => {
+      if (state.running) return;
+      state.items = [];
+      $("ims").value = "";
+      $("run").hidden = true;
+      $("start").textContent = "Buscar alvarás";
+      showError("");
+    });
+
+    // ---------- Downloads ----------
+    const stamp = () => new Date().toISOString().slice(0, 10);
+    const emitted = () => state.items.filter(i => i.pdf);
+    async function busy(btn, fn) {
+      const text = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Gerando…";
+      try { await fn(); } catch { showError("Não foi possível gerar o arquivo."); }
+      btn.textContent = text;
+      btn.disabled = false;
+    }
+    $("dl-zip").addEventListener("click", e => busy(e.target, async () => {
+      if (!window.JSZip) throw new Error();
+      const zip = new JSZip();
+      emitted().forEach(i => zip.file(fileName(i), i.pdf));
+      saveBlob(await zip.generateAsync({ type: "blob" }), `alvaras-${stamp()}.zip`);
+    }));
+    $("dl-merged").addEventListener("click", e => busy(e.target, async () => {
+      if (!window.PDFLib) throw new Error();
+      const out = await PDFLib.PDFDocument.create();
+      for (const i of emitted()) {
+        const doc = await PDFLib.PDFDocument.load(await i.pdf.arrayBuffer(), { ignoreEncryption: true });
+        (await out.copyPages(doc, doc.getPageIndices())).forEach(p => out.addPage(p));
+      }
+      saveBlob(new Blob([await out.save()], { type: "application/pdf" }), `alvaras-${stamp()}.pdf`);
+    }));
+    $("dl-xlsx").addEventListener("click", () => {
+      if (!window.XLSX) return showError("Não foi possível carregar o gerador de planilhas.");
+      const rows = [["Inscrição Municipal", "Razão social", "Resultado", "Arquivo"]];
+      state.items.forEach(i => rows.push([i.im || i.raw, i.nome,
+        i.status === "done" ? "Alvará emitido" : i.status === "pending" || i.status === "running" ? "Não consultado" : i.error,
+        i.pdf ? fileName(i) : ""]));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), "Alvarás");
+      XLSX.writeFile(wb, `alvaras-${stamp()}.xlsx`);
+    });
+
+    // ---------- Planilha ----------
+    // Usa a coluna cujo cabeçalho fala em "inscrição"; senão, a que tem mais números de inscrição.
+    function loadRows(rows) {
+      rows = rows.filter(r => r.some(c => String(c ?? "").trim() !== ""));
+      if (!rows.length) return showError("A planilha está vazia.");
+      const width = Math.max(...rows.map(r => r.length));
+      let best = rows[0].findIndex(c => /inscri|\bim\b|\bccm\b/i.test(String(c ?? "")));
+      if (best < 0) {
+        let bestCount = 0;
+        for (let c = 0; c < width; c++) {
+          const count = rows.filter(r => looksLikeIm(r[c])).length;
+          if (count > bestCount) { best = c; bestCount = count; }
+        }
+      }
+      const found = best < 0 ? [] : rows.map(r => r[best]).filter(looksLikeIm).map(v => String(v).trim());
+      if (!found.length) return showError("Não encontrei nenhuma Inscrição Municipal na planilha.");
+      const current = $("ims").value.trim();
+      $("ims").value = (current ? current + "\n" : "") + found.join("\n");
+    }
+    async function handleFile(file) {
+      showError("");
+      if (state.running) return showError("Pause a busca em andamento antes de enviar outra planilha.");
+      if (!window.XLSX) return showError("Não foi possível carregar o leitor de planilhas. Verifique sua conexão e recarregue a página.");
+      try {
+        const wb = XLSX.read(await file.arrayBuffer(), { type: "array", raw: true });
+        loadRows(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: true, defval: "" }));
+      } catch {
+        showError("Não consegui ler esse arquivo. Envie um .xlsx, .xls, .csv ou .txt.");
+      }
+    }
+    const drop = $("drop"), fileInput = $("file");
+    drop.addEventListener("click", () => fileInput.click());
+    drop.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); } });
+    fileInput.addEventListener("change", () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); fileInput.value = ""; });
+    ["dragenter", "dragover"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add("over"); }));
+    ["dragleave", "drop"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove("over"); }));
+    drop.addEventListener("drop", e => { if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+    $("sample").addEventListener("click", e => {
+      e.preventDefault();
+      if (!window.XLSX) return;
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Inscrição Municipal", "Empresa"], ["00178065009", "Exemplo"]]), "Inscrições");
+      XLSX.writeFile(wb, "modelo-inscricoes.xlsx");
+    });
+
+    // ---------- Programa local ----------
+    fetch("api/status", { cache: "no-store" })
+      .then(r => { if (!r.ok) throw 0; })
+      .catch(() => { $("offline").hidden = false; });
+  </script>
+</body>
+</html>
