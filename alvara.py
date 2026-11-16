@@ -16,6 +16,7 @@ import os
 import re
 import sys
 import threading
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -35,6 +36,10 @@ PORTAL_LOCK = threading.Lock()
 
 class PortalError(Exception):
     """Erro com mensagem pronta para mostrar ao usuário."""
+
+    def __init__(self, message, nome=""):
+        super().__init__(message)
+        self.nome = nome
 
 
 def clean_im(value):
@@ -56,6 +61,16 @@ def _messages(page):
     return "; ".join(dict.fromkeys(t for t in texts if t))
 
 
+def _motivos(page):
+    """Motivos listados pelo portal quando a certidão não pode ser emitida."""
+    m = re.search(r"Motivo\(s\) relacionado\(s\).*?</td>(.*?)</table>", page, re.S)
+    if not m:
+        return ""
+    cells = re.findall(r"<td[^>]*>(.*?)</td>", m.group(1), re.S)
+    texts = [re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", " ", c))).strip() for c in cells]
+    return " ".join(dict.fromkeys(t for t in texts if t))
+
+
 def _read(resp):
     body = resp.read()
     ctype = resp.headers.get("Content-Type", "")
@@ -70,13 +85,17 @@ def emitir_alvara(im):
 
     def call(url, data=None):
         body = urllib.parse.urlencode(data).encode("utf-8") if data is not None else None
-        try:
-            with opener.open(url, body, timeout=TIMEOUT) as resp:
-                return _read(resp)
-        except urllib.error.HTTPError as e:
-            raise PortalError("O portal da prefeitura respondeu com erro (HTTP %s)." % e.code)
-        except Exception:
-            raise PortalError("Falha de conexão com o portal da prefeitura.")
+        for attempt in range(3):  # o portal às vezes derruba a conexão; tenta de novo
+            try:
+                with opener.open(url, body, timeout=TIMEOUT) as resp:
+                    return _read(resp)
+            except urllib.error.HTTPError as e:
+                if e.code < 500 or attempt == 2:
+                    raise PortalError("O portal da prefeitura respondeu com erro (HTTP %s)." % e.code)
+            except Exception:
+                if attempt == 2:
+                    raise PortalError("Falha de conexão com o portal da prefeitura.")
+            time.sleep(2 * (attempt + 1))
 
     # 1) Abre a tela (cria a sessão)
     body, _ = call(PORTAL + "?" + START_QUERY)
@@ -124,8 +143,8 @@ def emitir_alvara(im):
         if body[:5] == b"%PDF-":
             return nome, body
 
-    raise PortalError((_messages(page) or "O portal não emitiu o alvará para esta inscrição.")
-                      + (" (%s)" % nome if nome else ""))
+    raise PortalError(_motivos(page) or _messages(page)
+                      or "O portal não emitiu o alvará para esta inscrição.", nome)
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -164,7 +183,7 @@ class Handler(SimpleHTTPRequestHandler):
                 nome, pdf = emitir_alvara(im)
         except PortalError as e:
             print("  %s  ERRO: %s" % (im, e))
-            return self._json(502, {"erro": str(e)})
+            return self._json(502, {"erro": str(e), "nome": e.nome})
         print("  %s  OK  %s" % (im, nome))
         self.send_response(200)
         self.send_header("Content-Type", "application/pdf")

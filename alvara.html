@@ -311,7 +311,11 @@
         return;
       }
       let msg = `Erro na consulta (HTTP ${resp.status}).`;
-      try { msg = (await resp.json()).erro || msg; } catch {}
+      try {
+        const data = await resp.json();
+        msg = data.erro || msg;
+        item.nome = data.nome || "";
+      } catch {}
       throw new Error(msg);
     }
 
