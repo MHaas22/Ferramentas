@@ -2,11 +2,10 @@
 // Intermediário para o Cloudflare Workers: recebe a Inscrição Municipal da
 // página alvara.html, consulta o Portal SIAT da prefeitura e devolve o PDF.
 //
-// Publicação: painel da Cloudflare > Workers & Pages > Create > "Hello World"
-// > Deploy > Edit code > apague tudo, cole este arquivo > Deploy.
+// Publicado junto com o site pelo wrangler.jsonc (repositório ligado à Cloudflare).
 
 // Sites autorizados a usar este intermediário.
-const ALLOWED_ORIGINS = ["https://mhaas22.github.io"];
+const ALLOWED_ORIGINS = ["https://ferramentas.michaelhaas2210.workers.dev", "https://mhaas22.github.io"];
 
 const PORTAL = "https://siatportal.campogrande.ms.gov.br/dsf_cgr_gtm/por/emitircertidaoportalcon.do";
 const START_QUERY = "evento=x&modoJanelaPlc=popup&TIPO=M&acronym=EMITIRALVARALOCALIZACAOEFUNCIONAMENTO";

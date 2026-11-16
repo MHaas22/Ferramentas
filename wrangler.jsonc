@@ -1,0 +1,7 @@
+// Publicação na Cloudflare: páginas estáticas + intermediário da busca de alvará (/api/*).
+{
+  "name": "ferramentas",
+  "main": "cloudflare/alvara-worker.js",
+  "compatibility_date": "2025-09-01",
+  "assets": { "directory": "./" }
+}
