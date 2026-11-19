@@ -1,5 +1,5 @@
 {
-  "atualizado_em": "2026-11-18",
+  "atualizado_em": "2026-11-19",
   "aliquota_interna": 17,
   "fecomp": 2,
   "aliquotas_interestaduais": [
@@ -12,5 +12,5 @@
     "fecomp": "Lei Estadual nº 1.810/1997, art. 41-A (adicional de 2 p.p. ao FECOMP sobre mercadorias específicas)"
   },
   "observacao": "Valores padrão da calculadora. Itens do Subanexo I com alíquota implícita diferente continuam sendo detectados automaticamente.",
-  "acompanhar": "Alíquota modal: em 17/11/2026 o governador apresentou à Assembleia pacote de 26 projetos de lei, incluindo elevar a alíquota modal de 17% para 19% (g1 MS, 17/11/2026), preservando benefícios de cesta básica, medicamentos, energia de baixa renda etc. Projeto ainda depende de duas votações e sanção; sem número nem vigência divulgados. Só alterar com lei publicada e data de vigência."
+  "acompanhar": "Alíquota modal: projeto enviado à Assembleia em 17/11/2026 eleva de 17% para 19% a partir de 2027 (imprensa: g1 MS, Campo Grande News). Depende de duas votações e sanção. Só alterar com lei publicada e data de vigência."
 }
