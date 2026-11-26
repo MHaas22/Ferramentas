@@ -2,6 +2,10 @@
 
 Registro automático de cada atualização da base da calculadora (mais recente no topo).
 
+## 2026-11-26
+- PMPF de MS pelo Ato COTEPE/PMPF nº 31, de 24/11/2026 (DOU 25/11/2026), vigência a partir de 01/12/2026: QAV 7,6119 → 7,7790; AEHC 4,0564 → 4,1361; GNV 4,4986 → 4,4399.
+- Subanexo I, alíquota interna (17%) e FECOMP (2%): sem alteração. Projeto de alíquota modal 19% (a partir de 2027) segue em tramitação na Assembleia.
+
 ## 2026-11-11
 - PMPF: passa a referir o Ato COTEPE/PMPF nº 30, de 09/11/2026 (DOU 10/11/2026), com vigência a partir de 16/11/2026. Valores de MS mantidos: QAV 7,6119; AEHC 4,0564; GNV 4,4986.
 - Subanexo I, alíquota interna e FECOMP: sem alteração.

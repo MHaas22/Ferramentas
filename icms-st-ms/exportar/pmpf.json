@@ -1,24 +1,24 @@
 {
-  "atualizado_em": "2026-11-11",
-  "ato": "Ato COTEPE/PMPF nº 30, de 9 de novembro de 2026",
-  "publicacao": "2026-11-10",
-  "vigencia_inicio": "2026-11-16",
-  "url": "https://www.confaz.fazenda.gov.br/legislacao/atos-pmpf/2026/ato-cotepe-pmpf-30-26",
+  "atualizado_em": "2026-11-26",
+  "ato": "Ato COTEPE/PMPF nº 31, de 24 de novembro de 2026",
+  "publicacao": "2026-11-25",
+  "vigencia_inicio": "2026-12-01",
+  "url": "https://www.confaz.fazenda.gov.br/legislacao/atos-pmpf/2026/ato-cotepe-pmpf-31-26",
   "uf": "MS",
   "itens": [
     {
       "produto": "QAV · querosene de aviação",
-      "valor": 7.6119,
+      "valor": 7.779,
       "unidade": "litro"
     },
     {
       "produto": "AEHC · etanol hidratado combustível",
-      "valor": 4.0564,
+      "valor": 4.1361,
       "unidade": "litro"
     },
     {
       "produto": "GNV · gás natural veicular",
-      "valor": 4.4986,
+      "valor": 4.4399,
       "unidade": "m³"
     }
   ],
